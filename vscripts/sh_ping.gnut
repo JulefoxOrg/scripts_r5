@@ -3095,7 +3095,6 @@ void function ClientCommand_PingNewLoot( entity player, array<string> args )
 	int ticketID      = int( args[1] )
 	vector pingOrigin = <float( args[2] ), float( args[3] ), float( args[4] )>
 	entity item       = GetEntityFromEncodedEHandle( eHandle )
-    printt(item.GetModelName())
 	if ( !IsValid( item ) )
 	{
 		printt( format( "PingLoot: player '%s' - couldn't find valid item for ehandle: 0x%x", player.GetPlayerName(), eHandle ) )
