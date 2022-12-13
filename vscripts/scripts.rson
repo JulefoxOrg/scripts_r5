@@ -922,6 +922,9 @@ Scripts:
 	gamemodes/custom_ctf/custom_ctf_settings.nut
 	gamemodes/custom_aimtrainer/sh_aimtrainer.nut
 	lobby/lobbyvm/sh_lobbyvm.nut
+    
+    gamemodes/custom_zombie/sh_custom_zombie.nut
+    gamemodes/custom_zombie/sh_custom_zombie_weapon_wall.nut
 ]
 
 When: "SERVER"
@@ -933,6 +936,8 @@ Scripts:
 
 	gamemodes/custom_aimtrainer/_aimtrainer.nut
 	lobby/lobbyvm/_lobbyvm.nut
+
+    gamemodes/custom_zombie/_custom_zombie.nut
 ]
 
 When: "CLIENT"
@@ -943,6 +948,8 @@ Scripts:
 	gamemodes/custom_ctf/cl_gamemode_custom_ctf.nut
 	gamemodes/custom_aimtrainer/cl_aimtrainer.nut
 	lobby/lobbyvm/cl_lobbyvm.nut
+
+    gamemodes/custom_zombie/cl_custom_zombie.nut
 ]
 
 

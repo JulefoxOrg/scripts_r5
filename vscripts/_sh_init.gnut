@@ -195,6 +195,20 @@ void function SV_CL_Init()
         #endif
     //
 
+    // Custom Zombie
+        #if SERVER
+            CustomZombie_Init()
+        #endif
+
+        #if CLIENT
+            ClCustomZombie_Init()
+        #endif
+
+        #if SERVER || CLIENT
+            ShCustomZombie_Init()
+        #endif
+    //
+
 	#if CLIENT
 		Cl_DeathScreen_Init()
 	#endif
