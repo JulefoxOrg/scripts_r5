@@ -12,5 +12,6 @@
     void function ShCustomZombie_Init()
     {
         ShZombieWeaponWall_Init()
+        ShCustomZombieCurrency_Init()
     }
 #endif  // SERVER || CLIENT

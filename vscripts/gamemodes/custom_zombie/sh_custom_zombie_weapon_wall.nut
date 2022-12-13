@@ -88,7 +88,7 @@
         [ eWeaponZombieIdx.KRABER ] = $"mdl/weapons/at_rifle/w_at_rifle.rmdl",
         [ eWeaponZombieIdx.DMR ] = $"mdl/weapons/rspn101_dmr/w_rspn101_dmr.rmdl",
         [ eWeaponZombieIdx.TRIPLETAKE ] = $"mdl/weapons/doubletake/w_doubletake.rmdl",
-        [ eWeaponZombieIdx.SENTINEL ] = $"mdl/weapons/sentinel/w_sentinel.rmdl",
+        [ eWeaponZombieIdx.SENTINEL ] = $"mdl/Weapons/sentinel/w_sentinel.rmdl",
         [ eWeaponZombieIdx.EVA ] = $"mdl/weapons/w1128/w_w1128.rmdl",
         [ eWeaponZombieIdx.MASTIFF ] = $"mdl/weapons/mastiff_stgn/w_mastiff.rmdl",
         [ eWeaponZombieIdx.MOZAMBIQUE ] = $"mdl/weapons/pstl_sa3/w_pstl_sa3.rmdl",
@@ -130,6 +130,37 @@
         [ eWeaponZombieIdx.ARCSTAR ] = [ "mp_weapon_grenade_emp", "Arc Star" ],
         [ eWeaponZombieIdx.FRAG ] = [ "mp_weapon_frag_grenade", "Frag Grenade" ],
         [ eWeaponZombieIdx.THERMITE ] = [ "mp_weapon_thermite_grenade", "Thermite Grenade" ]
+    }
+
+    table< int, array< int > > eWeaponZombiePrice =
+    {
+        [ eWeaponZombieIdx.FLATLINE ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.SCOUT ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.HAVOC ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.HEMLOK ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.R101 ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.ALTERNATOR ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.PROWLER ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.R97 ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.VOLT ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.DEVOTION ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.LSTAR ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.SPITFIRE ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.CHARGE ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.KRABER ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.DMR ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.TRIPLETAKE ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.SENTINEL ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.EVA ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.MASTIFF ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.MOZAMBIQUE ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.PEACEKEEPER ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.P2020 ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.RE45 ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.WINGMAN ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.ARCSTAR ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.FRAG ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.THERMITE ] = [ 2000, 500 ]
     }
 #endif // SERVER || CLIENT
 
@@ -233,8 +264,16 @@
 
     void function WeaponWallUseSuccess( entity usableWeaponWall, entity player, ExtendedUseSettings settings )
     {
+        int weaponIdx = GetWeaponIdx( usableWeaponWall )
+
+        if ( !PlayerHasEnoughCurrency( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] ) )
+            return
+
+        RemoveCurrencyToPlayerWallet( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] )
+        AddCurrencyToPlayerWallet( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] )
+        
         #if SERVER
-            thread ServerWeaponWallUseSuccess( usableWeaponWall, player )
+            ServerWeaponWallUseSuccess( usableWeaponWall, player )
         #endif // SERVER
     }
 #endif // SERVER || CLIENT
@@ -252,9 +291,11 @@
     string function WeaponWall_TextOverride( entity usableWeaponWall )
     {
         int weaponIdx = GetWeaponIdx( usableWeaponWall )
+
     	if ( PlayerHasWeapon( GetLocalViewPlayer(), eWeaponZombieName[ weaponIdx ][ 0 ] ) )
-    		return USE + " " + format( WEAPON_WALL_BUY_AMMO, eWeaponZombieName[ weaponIdx ][ 1 ] )
-    	return USE + " " + format( WEAPON_WALL_BUY_WEAPON, eWeaponZombieName[ weaponIdx ][ 1 ] )
+    		return USE + " " + format( WEAPON_WALL_BUY_AMMO, eWeaponZombieName[ weaponIdx ][ 1 ] + "\nCost: " + eWeaponZombiePrice[ weaponIdx ][ 1 ] )
+
+    	return USE + " " + format( WEAPON_WALL_BUY_WEAPON, eWeaponZombieName[ weaponIdx ][ 1 ] + "\nCost: " + eWeaponZombiePrice[ weaponIdx ][ 0 ] )
     }
 #endif // CLIENT
 
@@ -264,31 +305,58 @@
     {
         entity weapon ; int weaponIdx = GetWeaponIdx( usableWeaponWall ) ; string weaponName = eWeaponZombieName[ weaponIdx ][ 0 ]
 
-        if ( PlayerHasWeapon( player, weaponName ) || weaponIdx == -1 ) return
-
-        entity primary = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
-        entity secondary = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 )
-        int activeWeaponInt = SURVIVAL_GetActiveWeaponSlot( player )
-        entity activeWeapon = player.GetNormalWeapon( activeWeaponInt )
-
-        if  ( primary == null )
+        if ( PlayerHasWeapon( player, weaponName ) )
         {
-            weapon = player.GiveWeapon( weaponName, WEAPON_INVENTORY_SLOT_PRIMARY_0 )
-        } 
-        else if ( secondary == null )
-        {
-            weapon = player.GiveWeapon( weaponName, WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+            //if ( PlayerHasEnoughCurrency( player, eWeaponZombiePrice[ weaponIdx ][ 1 ] ) )
         }
-        else if ( IsValid( activeWeapon ) )
+        else
         {
-            player.TakeWeaponByEntNow( activeWeapon )
-            weapon = player.GiveWeapon( weaponName, activeWeaponInt )
+            entity primary = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+            entity secondary = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+            int activeWeaponInt = SURVIVAL_GetActiveWeaponSlot( player )
+            entity activeWeapon = player.GetNormalWeapon( activeWeaponInt )
+
+            if  ( primary == null ) weapon = GiveWeaponToPlayer( player, weaponName, WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+            else if ( secondary == null ) weapon = GiveWeaponToPlayer( player, weaponName, WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+            else if ( IsValid( activeWeapon ) ) weapon = SwapWeaponToPlayer( player, activeWeapon, weaponName, activeWeaponInt )
+            else printt( "void" )
+
+            if ( weapon != null ) weapon.AddMod( "survival_finite_ammo" )
+
+            if ( PlayerHasWeapon( player, weaponName ) ) player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponName )
         }
-        else printt( "void" )
+    }
 
-        if (weapon != null ) weapon.AddMod( "survival_finite_ammo" )
+    entity function GiveWeaponToPlayer( entity player, string weaponName, int inventorySlot )
+    {
+        entity weapon
 
-        if ( PlayerHasWeapon( player, weaponName ) ) player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponName )
+        if ( weaponName == "mp_weapon_grenade_emp" || weaponName == "mp_weapon_frag_grenade" || weaponName == "mp_weapon_thermite_grenade" )
+        {
+            SURVIVAL_AddToPlayerInventory( player, weaponName, 1 )
+            weapon = null
+        }
+        else weapon = player.GiveWeapon( weaponName, inventorySlot )
+
+        return weapon
+    }
+
+    entity function SwapWeaponToPlayer( entity player, entity weaponSwap, string weaponName, int inventorySlot )
+    {
+        entity weapon
+
+        if ( weaponName == "mp_weapon_grenade_emp" || weaponName == "mp_weapon_frag_grenade" || weaponName == "mp_weapon_thermite_grenade" )
+        {
+            SURVIVAL_AddToPlayerInventory( player, weaponName, 1 )
+            weapon = null
+        }
+        else
+        {
+            player.TakeWeaponByEntNow( weaponSwap )
+            weapon = player.GiveWeapon( weaponName, inventorySlot )
+        }
+
+        return weapon
     }
 
     entity function CreateWeaponWall( int index, vector pos, vector ang )

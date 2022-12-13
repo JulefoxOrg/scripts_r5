@@ -9,10 +9,9 @@ void function CustomZombie_Init()
     AddCallback_EntitiesDidLoad( WeaponWalls )
 }
 
-
 void function WeaponWalls()
 {
-    CreateWeaponWall( eWeaponZombieIdx.R101, < 1859.9375, 4381.93164, -3148.17285-160 >, < 0, -90, 0 > )
+    CreateWeaponWall( eWeaponZombieIdx.R101, < 1859.9375, 4381.93164, -3148.17285 >, < 0, -90, 0 > )
     CreateWeaponWall( eWeaponZombieIdx.FLATLINE, < 1859.9375, 4481.93164, -3148.17285 >, < 0, -90, 0 > )
     CreateWeaponWall( eWeaponZombieIdx.MASTIFF, < 1859.9375, 4581.93164, -3148.17285 >, < 0, -90, 0 > )
     CreateWeaponWall( eWeaponZombieIdx.WINGMAN, < 1859.9375, 4681.93164, -3148.17285 >, < 0, -90, 0 > )
