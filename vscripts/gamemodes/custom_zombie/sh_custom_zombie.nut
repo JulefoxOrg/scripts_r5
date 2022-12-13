@@ -11,6 +11,6 @@
 #if SERVER || CLIENT
     void function ShCustomZombie_Init()
     {
-    
+        ShZombieWeaponWall_Init()
     }
 #endif  // SERVER || CLIENT

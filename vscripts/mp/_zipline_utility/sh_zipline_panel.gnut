@@ -51,7 +51,6 @@
     {
         if ( !IsValidZiplineUtilityPanelEnt( UsableButton ) )
             return
-        printt(UsableButton)
 
         SetCallback_CanUseEntityCallback( UsableButton, ZiplinePanel_CanUse )
         AddCallback_OnUseEntity( UsableButton, OnUseProcessingPanel )
