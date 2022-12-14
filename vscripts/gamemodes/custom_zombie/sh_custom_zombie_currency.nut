@@ -4,6 +4,7 @@ untyped
 global function ShCustomZombieCurrency_Init
 global function GetPlayerWallet
 global function PlayerHasEnoughCurrency
+global function GetPlayerStruct
 global function AddCurrencyToPlayerWallet
 global function RemoveCurrencyToPlayerWallet
 
@@ -12,6 +13,11 @@ global struct CustomZombieCurrency
 {
     entity player
     int wallet = 0
+    int lastBuyPrice
+
+    #if CLIENT
+        var playerScore
+    #endif
 
     table < entity, CustomZombieCurrency > playersWallets
 }
@@ -47,34 +53,36 @@ CustomZombieCurrency function PlayerWalletInit( entity player )
     CustomZombieCurrency walletInit
 
     customZombieCurrency.playersWallets[ player ] <- walletInit
+    walletInit.player = player
 
     return customZombieCurrency.playersWallets[ player ]
 }
 
 void function AddCurrencyToPlayerWallet( entity player, int currency )
 {
-    CustomZombieCurrency wallet = customZombieCurrency.playersWallets[ player ]
-    wallet.wallet = wallet.wallet + currency
+    #if SERVER
+        CustomZombieCurrency wallet = customZombieCurrency.playersWallets[ player ]
+        wallet.wallet = wallet.wallet + currency
 
-    //#if !CLIENT
-    //    Remote_CallFunction_NonReplay( player, "ServerCallback_AddCurrencyToSpecifiedPlayer", player, currency )
-    //#endif
-
-    printt( "Player now have: " + wallet.wallet + " $" )
+        Remote_CallFunction_NonReplay( player, "ServerCallback_AddCurrencyToSpecifiedPlayer", player, currency )
+    #endif // SERVER
 }
 
 void function RemoveCurrencyToPlayerWallet( entity player, int currency )
 {
-    CustomZombieCurrency wallet = customZombieCurrency.playersWallets[ player ]
-    wallet.wallet = wallet.wallet - currency
+    #if SERVER
+        CustomZombieCurrency wallet = customZombieCurrency.playersWallets[ player ]
+        wallet.wallet = wallet.wallet - currency
 
-    //#if !CLIENT
-    //    Remote_CallFunction_NonReplay( player, "ServerCallback_RemoveCurrencyToSpecifiedPlayer", player, currency )
-    //#endif
+        if ( wallet.wallet < 0 ) wallet.wallet = 0
 
-    if ( wallet.wallet < 0 ) wallet.wallet = 0
+        Remote_CallFunction_NonReplay( player, "ServerCallback_RemoveCurrencyToSpecifiedPlayer", player, currency )
+    #endif // SERVER
+}
 
-    printt( "Player now have: " + wallet.wallet + " $" )
+CustomZombieCurrency function GetPlayerStruct( entity player )
+{
+    return customZombieCurrency.playersWallets[ player ]
 }
 
 int function GetPlayerWallet( entity player )
@@ -93,7 +101,9 @@ bool function PlayerHasEnoughCurrency( entity player, int weaponPrice )
 #if SERVER
     void function OnClientConnected( entity player )
     {
-        AddCurrencyToPlayerWallet( player, 900000 )
+        AddCurrencyToPlayerWallet( player, 8000 )
+        Remote_CallFunction_NonReplay( player, "ServerCallback_RUIInit" )
+        GiveWeaponToPlayer( player, "mp_weapon_semipistol", WEAPON_INVENTORY_SLOT_PRIMARY_0 )
     }
 
     void function OnClientDisconnected( entity player )
@@ -106,7 +116,7 @@ bool function PlayerHasEnoughCurrency( entity player, int weaponPrice )
     {
         CustomZombieCurrency wallet = customZombieCurrency.playersWallets[ player ]
 
-    	printt( "Player have: " + wallet.wallet + " $" )
+    	printt( "Player have: " + GetPlayerWallet( player ) + " $" )
     
     	return true
     }

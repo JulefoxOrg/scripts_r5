@@ -13,5 +13,6 @@
     {
         ShZombieWeaponWall_Init()
         ShCustomZombieCurrency_Init()
+        ShZombieMysteryBox_Init()
     }
 #endif  // SERVER || CLIENT

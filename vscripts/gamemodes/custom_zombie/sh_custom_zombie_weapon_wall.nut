@@ -5,6 +5,7 @@
 
 #if SERVER // Global
     global function CreateWeaponWall
+    global function GiveWeaponToPlayer
 #endif // SERVER
 
 #if SERVER || CLIENT // Global
@@ -265,7 +266,8 @@
         int weaponIdx = GetWeaponIdx( usableWeaponWall )
         string weaponName = eWeaponZombieName[ weaponIdx ][ 0 ]
 
-        if ( PlayerHasWeapon( player, weaponName ) ) // Where is client
+
+        if ( PlayerHasWeapon( player, weaponName ) )
         {
             if ( !PlayerHasEnoughCurrency( player, eWeaponZombiePrice[ weaponIdx ][ 1 ] ) )
                 return
@@ -274,19 +276,20 @@
 
             weapon.SetWeaponPrimaryClipCount( weapon.GetWeaponPrimaryClipCountMax() )
 
+            int lastBuyPrice = eWeaponZombiePrice[ weaponIdx ][ 1 ]
+
             RemoveCurrencyToPlayerWallet( player, eWeaponZombiePrice[ weaponIdx ][ 1 ] )
             
             //SURVIVAL_AddToPlayerInventory( player, "bullet", 60 )
 
-            #if CLIENT
-		    if( player == GetLocalViewPlayer() )
-		    	AddPlayerHint( 5.0, 0.25, $"", "You have: " + GetPlayerWallet( player ) + " $" )
-		    #endif
+            //Survival_PickupItem( weapon, player )
         }
         else
         {
             if ( !PlayerHasEnoughCurrency( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] ) )
                 return
+
+            int lastBuyPrice = eWeaponZombiePrice[ weaponIdx ][ 0 ]
 
             RemoveCurrencyToPlayerWallet( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] )
         
@@ -294,10 +297,7 @@
                 ServerWeaponWallUseSuccess( usableWeaponWall, player )
             #endif // SERVER
 
-            #if CLIENT
-		    if( player == GetLocalViewPlayer() )
-		    	AddPlayerHint( 5.0, 0.25, $"", "You have: " + GetPlayerWallet( player ) + " $" )
-		    #endif
+            //Survival_PickupItem( weapon, player )
         }
     }
 #endif // SERVER || CLIENT
@@ -357,7 +357,7 @@
 
         if ( weaponName == "mp_weapon_grenade_emp" || weaponName == "mp_weapon_frag_grenade" || weaponName == "mp_weapon_thermite_grenade" )
         {
-            SURVIVAL_AddToPlayerInventory( player, weaponName, 1 )
+            SURVIVAL_AddToPlayerInventory( player, weaponName, 1, false )
 
             weapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
 
@@ -380,7 +380,7 @@
 
         if ( weaponName == "mp_weapon_grenade_emp" || weaponName == "mp_weapon_frag_grenade" || weaponName == "mp_weapon_thermite_grenade" )
         {
-            SURVIVAL_AddToPlayerInventory( player, weaponName, 1 )
+            SURVIVAL_AddToPlayerInventory( player, weaponName, 1, false )
 
             weapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
 
