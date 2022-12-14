@@ -265,7 +265,7 @@
         int weaponIdx = GetWeaponIdx( usableWeaponWall )
         string weaponName = eWeaponZombieName[ weaponIdx ][ 0 ]
 
-        if ( PlayerHasWeapon( player, weaponName ) )
+        if ( PlayerHasWeapon( player, weaponName ) ) // Where is client
         {
             if ( !PlayerHasEnoughCurrency( player, eWeaponZombiePrice[ weaponIdx ][ 1 ] ) )
                 return
