@@ -24,4 +24,6 @@ void function WeaponWalls()
         CreateWeaponWall( i, < 3591.93848, 4244.01758 + offset, -4263.96191 >, < 0, -90, 0 > )
         offset += 100
     }
+
+    CreateMysteryBox( <3482.94702, 6998.60303, -4303.96875>, < 0, -90, 0 > )
 }
