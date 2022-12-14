@@ -134,33 +134,33 @@
 
     table< int, array< int > > eWeaponZombiePrice =
     {
-        [ eWeaponZombieIdx.FLATLINE ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.SCOUT ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.HAVOC ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.HEMLOK ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.R101 ] = [ 2000, 500 ],
+        [ eWeaponZombieIdx.FLATLINE ] = [ 1250, 500 ],
+        [ eWeaponZombieIdx.SCOUT ] = [ 750, 200 ],
+        [ eWeaponZombieIdx.HAVOC ] = [ 750, 200 ],
+        [ eWeaponZombieIdx.HEMLOK ] = [ 750, 200 ],
+        [ eWeaponZombieIdx.R101 ] = [ 1250, 500 ],
         [ eWeaponZombieIdx.ALTERNATOR ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.PROWLER ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.R97 ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.VOLT ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.DEVOTION ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.LSTAR ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.SPITFIRE ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.CHARGE ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.KRABER ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.DMR ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.TRIPLETAKE ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.SENTINEL ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.EVA ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.MASTIFF ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.MOZAMBIQUE ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.PEACEKEEPER ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.P2020 ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.RE45 ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.WINGMAN ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.ARCSTAR ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.FRAG ] = [ 2000, 500 ],
-        [ eWeaponZombieIdx.THERMITE ] = [ 2000, 500 ]
+        [ eWeaponZombieIdx.PROWLER ] = [ 500, 150 ],
+        [ eWeaponZombieIdx.R97 ] = [ 750, 200 ],
+        [ eWeaponZombieIdx.VOLT ] = [ 750, 200 ],
+        [ eWeaponZombieIdx.DEVOTION ] = [ 750, 200 ],
+        [ eWeaponZombieIdx.LSTAR ] = [ 750, 200 ],
+        [ eWeaponZombieIdx.SPITFIRE ] = [ 1250, 200 ],
+        [ eWeaponZombieIdx.CHARGE ] = [ 500, 150 ],
+        [ eWeaponZombieIdx.KRABER ] = [ 750, 200 ],
+        [ eWeaponZombieIdx.DMR ] = [ 750, 200 ],
+        [ eWeaponZombieIdx.TRIPLETAKE ] = [ 500, 150 ],
+        [ eWeaponZombieIdx.SENTINEL ] = [ 500, 150 ],
+        [ eWeaponZombieIdx.EVA ] = [ 750, 200 ],
+        [ eWeaponZombieIdx.MASTIFF ] = [ 750, 200 ],
+        [ eWeaponZombieIdx.MOZAMBIQUE ] = [ 100, 50 ],
+        [ eWeaponZombieIdx.PEACEKEEPER ] = [ 750, 200 ],
+        [ eWeaponZombieIdx.P2020 ] = [ 100, 50 ],
+        [ eWeaponZombieIdx.RE45 ] = [ 250, 100 ],
+        [ eWeaponZombieIdx.WINGMAN ] = [ 750, 200 ],
+        [ eWeaponZombieIdx.ARCSTAR ] = [ 200, 0 ],
+        [ eWeaponZombieIdx.FRAG ] = [ 200, 0 ],
+        [ eWeaponZombieIdx.THERMITE ] = [ 200, 0 ]
     }
 #endif // SERVER || CLIENT
 
@@ -175,7 +175,6 @@
         #if CLIENT
             AddCreateCallback( "prop_dynamic", usableWeaponWall )
         #endif // CLIENT
-        PrecacheModel($"mdl/weapons/prowler_smg/w_prowler_smg")
     }
 #endif  // SERVER || CLIENT
 
@@ -217,9 +216,8 @@
         #if SERVER
             usableWeaponWall.SetUsable()
             usableWeaponWall.SetUsableByGroup( "pilot" )
-            usableWeaponWall.AddUsableValue( 60 )
             usableWeaponWall.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
-            usableWeaponWall.SetUsablePriority( USABLE_PRIORITY_HIGH )
+            usableWeaponWall.SetUsablePriority( USABLE_PRIORITY_MEDIUM )
         #endif // SERVER
 
         SetCallback_CanUseEntityCallback( usableWeaponWall, usableWeaponWall_CanUse )
@@ -265,16 +263,42 @@
     void function WeaponWallUseSuccess( entity usableWeaponWall, entity player, ExtendedUseSettings settings )
     {
         int weaponIdx = GetWeaponIdx( usableWeaponWall )
+        string weaponName = eWeaponZombieName[ weaponIdx ][ 0 ]
 
-        if ( !PlayerHasEnoughCurrency( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] ) )
-            return
+        if ( PlayerHasWeapon( player, weaponName ) )
+        {
+            if ( !PlayerHasEnoughCurrency( player, eWeaponZombiePrice[ weaponIdx ][ 1 ] ) )
+                return
 
-        RemoveCurrencyToPlayerWallet( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] )
-        AddCurrencyToPlayerWallet( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] )
+            entity weapon = player.GetNormalWeapon( SURVIVAL_GetActiveWeaponSlot( player ) )
+
+            weapon.SetWeaponPrimaryClipCount( weapon.GetWeaponPrimaryClipCountMax() )
+
+            RemoveCurrencyToPlayerWallet( player, eWeaponZombiePrice[ weaponIdx ][ 1 ] )
+            
+            //SURVIVAL_AddToPlayerInventory( player, "bullet", 60 )
+
+            #if CLIENT
+		    if( player == GetLocalViewPlayer() )
+		    	AddPlayerHint( 5.0, 0.25, $"", "You have: " + GetPlayerWallet( player ) + " $" )
+		    #endif
+        }
+        else
+        {
+            if ( !PlayerHasEnoughCurrency( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] ) )
+                return
+
+            RemoveCurrencyToPlayerWallet( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] )
         
-        #if SERVER
-            ServerWeaponWallUseSuccess( usableWeaponWall, player )
-        #endif // SERVER
+            #if SERVER
+                ServerWeaponWallUseSuccess( usableWeaponWall, player )
+            #endif // SERVER
+
+            #if CLIENT
+		    if( player == GetLocalViewPlayer() )
+		    	AddPlayerHint( 5.0, 0.25, $"", "You have: " + GetPlayerWallet( player ) + " $" )
+		    #endif
+        }
     }
 #endif // SERVER || CLIENT
 
@@ -307,7 +331,7 @@
 
         if ( PlayerHasWeapon( player, weaponName ) )
         {
-            //if ( PlayerHasEnoughCurrency( player, eWeaponZombiePrice[ weaponIdx ][ 1 ] ) )
+            
         }
         else
         {
@@ -334,7 +358,16 @@
         if ( weaponName == "mp_weapon_grenade_emp" || weaponName == "mp_weapon_frag_grenade" || weaponName == "mp_weapon_thermite_grenade" )
         {
             SURVIVAL_AddToPlayerInventory( player, weaponName, 1 )
-            weapon = null
+
+            weapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+
+            printt(weapon)
+
+            //if ( IsValid( weapon ) )
+		    //{
+                weapon = player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponName )
+            //}
+
         }
         else weapon = player.GiveWeapon( weaponName, inventorySlot )
 
@@ -348,7 +381,13 @@
         if ( weaponName == "mp_weapon_grenade_emp" || weaponName == "mp_weapon_frag_grenade" || weaponName == "mp_weapon_thermite_grenade" )
         {
             SURVIVAL_AddToPlayerInventory( player, weaponName, 1 )
-            weapon = null
+
+            weapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+
+            if ( IsValid( weapon ) )
+		    {
+                weapon = player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponName )
+            }
         }
         else
         {

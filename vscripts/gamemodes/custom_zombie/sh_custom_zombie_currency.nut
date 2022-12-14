@@ -38,7 +38,7 @@ void function ShCustomZombieCurrency_Init()
 void function WalletInit( entity player )
 {
     PlayerWalletInit( player )
-    AddCurrencyToPlayerWallet( player, 4000 )
+    AddCurrencyToPlayerWallet( player, 900000 )
 }
 
 CustomZombieCurrency function PlayerWalletInit( entity player )
@@ -55,7 +55,7 @@ void function AddCurrencyToPlayerWallet( entity player, int currency )
     CustomZombieCurrency wallet = customZombieCurrency.playersWallets[ player ]
     wallet.wallet = wallet.wallet + currency 
 
-    printt( "Player now have: " + wallet.wallet )
+    printt( "Player now have: " + wallet.wallet + " $" )
 }
 
 void function RemoveCurrencyToPlayerWallet( entity player, int currency )
@@ -65,7 +65,7 @@ void function RemoveCurrencyToPlayerWallet( entity player, int currency )
 
     if ( wallet.wallet < 0 ) wallet.wallet = 0
 
-    printt( "Player now have: " + wallet.wallet )
+    printt( "Player now have: " + wallet.wallet + " $" )
 }
 
 int function GetPlayerWallet( entity player )
@@ -86,7 +86,9 @@ bool function PlayerHasEnoughCurrency( entity player, int weaponPrice )
     {
         CustomZombieCurrency wallet = customZombieCurrency.playersWallets[ player ]
 
-    	printt( "Player have: " + wallet.wallet )
+    	//printt( "Player have: " + wallet.wallet + " $" )
+
+        GetPlayerWalletString( player )
     
     	return true
     }
