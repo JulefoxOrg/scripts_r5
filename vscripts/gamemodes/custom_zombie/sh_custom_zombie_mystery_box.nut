@@ -20,10 +20,10 @@
 #endif // SERVER
 
 #if SERVER || CLIENT // Const
+    const int    MYSTERY_BOX_COST            = 950
     const float  MYSTERY_BOX_ON_USE_DURATION = 0.0
     const string USE                         = "%use%"
-    const string MYSTERY_BOX_BUY_WEAPON      = "to buy %s $"
-    const string MYSTERY_BOX_BUY_AMMO        = "to buy ammo for %s $"
+    const string MYSTERY_BOX_USE             = "to open Mystery Box\nCost: %i $"
     const string MYSTERY_BOX_SCRIPT_NAME     = "MysteryBoxScriptName"
 #endif // SERVER || CLIENT
 
@@ -31,8 +31,10 @@ struct
 {
     entity mysteryBox
     entity mysteryBoxFx
+    entity mysteryBoxScriptMover
+    bool isUsable = false
 }
-mysteryBox
+mysteryBoxStruct
 
 #if SERVER || CLIENT
     void function ShZombieMysteryBox_Init()
@@ -83,6 +85,7 @@ mysteryBox
             usableMysteryBox.SetUsableByGroup( "pilot" )
             usableMysteryBox.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
             usableMysteryBox.SetUsablePriority( USABLE_PRIORITY_MEDIUM )
+            mysteryBoxStruct.isUsable = true
         #endif // SERVER
 
         SetCallback_CanUseEntityCallback( usableMysteryBox, usableMysteryBox_CanUse )
@@ -116,12 +119,15 @@ mysteryBox
     {
         printt("success")
         #if SERVER
-            if ( usableMysteryBox.Anim_IsActive() )
-		        return
+            if ( !PlayerHasEnoughCurrency( player, MYSTERY_BOX_COST ) )
+                return
 
 	        EmitSoundOnEntity( usableMysteryBox, SOUND_LOOT_BIN_OPEN )
 
-            thread MysteryBox_PlayOpenSequence( usableMysteryBox, player )
+            RemoveCurrencyToPlayerWallet( player, MYSTERY_BOX_COST )
+
+            waitthread MysteryBox_PlayOpenSequence( usableMysteryBox, player )
+            thread MysteryBox_Thread( usableMysteryBox, player )
         #endif
     }
 #endif // SERVER || CLIENT
@@ -138,7 +144,10 @@ mysteryBox
 
     string function MysteryBox_TextOverride( entity usableMysteryBox )
     {
-    	return ""
+        if ( !mysteryBoxStruct.isUsable )
+            return ""
+
+        return USE + " " + format( MYSTERY_BOX_USE, MYSTERY_BOX_COST )
     }
 #endif // CLIENT
 
@@ -147,7 +156,19 @@ mysteryBox
     void function SetMysteryBoxFx( entity usableMysteryBox )
     {
         PrecacheParticleSystem( MYSTERY_BOX_BEAM )
-        mysteryBox.mysteryBoxFx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( MYSTERY_BOX_BEAM ), usableMysteryBox.GetOrigin(), < 90, 0, 0 > )
+        mysteryBoxStruct.mysteryBoxFx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( MYSTERY_BOX_BEAM ), usableMysteryBox.GetOrigin(), < 90, 0, 0 > )
+    }
+
+    void function MysteryBox_Thread( entity usableMysteryBox, entity player )
+    {
+        mysteryBoxStruct.isUsable = false
+        usableMysteryBox.SetParent( mysteryBoxStruct.mysteryBoxScriptMover )
+        usableMysteryBox.UnsetUsable()
+        mysteryBoxStruct.mysteryBoxScriptMover.NonPhysicsMoveTo( usableMysteryBox.GetOrigin() + < 0, 0, 1000 >, 20, 10, 10)
+        wait 20
+        usableMysteryBox.ClearParent()
+        usableMysteryBox.SetUsable()
+        mysteryBoxStruct.isUsable = true
     }
 
     void function ServerMysteryBoxUseSuccess( entity usableMysteryBox, entity player )
@@ -157,33 +178,37 @@ mysteryBox
 
     entity function CreateMysteryBox( vector origin, vector angles )
     {
-	    entity lootbin = CreateEntity( "prop_dynamic" )
-	    lootbin.SetScriptName( MYSTERY_BOX_SCRIPT_NAME )
-	    lootbin.SetValueForModelKey( LOOT_BIN_MODEL )
-	    lootbin.SetOrigin( origin )
-	    lootbin.SetAngles( angles )
-	    lootbin.kv.solid = SOLID_VPHYSICS
+	    entity mysteryBox = CreateEntity( "prop_dynamic" )
+	    mysteryBox.SetScriptName( MYSTERY_BOX_SCRIPT_NAME )
+	    mysteryBox.SetValueForModelKey( LOOT_BIN_MODEL )
+	    mysteryBox.SetOrigin( origin )
+	    mysteryBox.SetAngles( angles )
+	    mysteryBox.kv.solid = SOLID_VPHYSICS
 
-	    DispatchSpawn( lootbin )
+	    DispatchSpawn( mysteryBox )
 
-	    return lootbin
+        // Script Mover
+        entity scriptMover = CreateScriptMover( origin, angles )
+        mysteryBoxStruct.mysteryBoxScriptMover = scriptMover
+
+	    return mysteryBox
     }
 
-    void function MysteryBox_PlayOpenSequence( entity lootbin, entity player )
+    void function MysteryBox_PlayOpenSequence( entity mysteryBox, entity player )
     {
-        GradeFlagsSet( lootbin, eGradeFlags.IS_BUSY )
+        GradeFlagsSet( mysteryBox, eGradeFlags.IS_BUSY )
 
-        if ( !lootbin.e.hasBeenOpened )
+        if ( !mysteryBox.e.hasBeenOpened )
         {
-        	lootbin.e.hasBeenOpened = true
+        	mysteryBox.e.hasBeenOpened = true
 
-        	StopSoundOnEntity( lootbin, SOUND_LOOT_BIN_IDLE )
+        	StopSoundOnEntity( mysteryBox, SOUND_LOOT_BIN_IDLE )
         }
 
-        GradeFlagsSet( lootbin, eGradeFlags.IS_OPEN )
+        GradeFlagsSet( mysteryBox, eGradeFlags.IS_OPEN )
 
-	    waitthread PlayAnim( lootbin, "loot_bin_01_open" )
+	    waitthread PlayAnim( mysteryBox, "loot_bin_01_open" )
 
-	    GradeFlagsClear( lootbin, eGradeFlags.IS_BUSY )
+	    GradeFlagsClear( mysteryBox, eGradeFlags.IS_BUSY )
     }
 #endif
