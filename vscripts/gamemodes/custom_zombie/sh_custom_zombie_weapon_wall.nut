@@ -19,8 +19,8 @@
 #if SERVER || CLIENT // Const
     const float  WEAPON_WALL_ON_USE_DURATION = 0.0
     const string USE                         = "%use%"
-    const string WEAPON_WALL_BUY_WEAPON      = "to buy %s"
-    const string WEAPON_WALL_BUY_AMMO        = "to buy ammo for %s"
+    const string WEAPON_WALL_BUY_WEAPON      = "to buy %s\nCost: %i"
+    const string WEAPON_WALL_BUY_AMMO        = "to buy ammo for %s\nCost: %i"
     const string WEAPON_WALL_SCRIPT_NAME     = "WeaponWallScriptName"
 #endif // SERVER || CLIENT
 
@@ -190,16 +190,8 @@
 
     bool function IsValidusableWeaponWallEnt( entity ent )
     {
-        asset modelName = ent.GetModelName()
-
         if ( ent.GetScriptName() == WEAPON_WALL_SCRIPT_NAME )
-        {
-            for ( int i = 0 ; i < eWeaponZombieModel.len() ; i++  )
-            {
-                if ( modelName == eWeaponZombieModel[ i ] )
-                    return true
-            }
-        }
+            return true
 
         return false
     }
@@ -317,9 +309,9 @@
         int weaponIdx = GetWeaponIdx( usableWeaponWall )
 
     	if ( PlayerHasWeapon( GetLocalViewPlayer(), eWeaponZombieName[ weaponIdx ][ 0 ] ) )
-    		return USE + " " + format( WEAPON_WALL_BUY_AMMO, eWeaponZombieName[ weaponIdx ][ 1 ] + "\nCost: " + eWeaponZombiePrice[ weaponIdx ][ 1 ] )
+    		return USE + " " + format( WEAPON_WALL_BUY_AMMO, eWeaponZombieName[ weaponIdx ][ 1 ], eWeaponZombiePrice[ weaponIdx ][ 1 ] )
 
-    	return USE + " " + format( WEAPON_WALL_BUY_WEAPON, eWeaponZombieName[ weaponIdx ][ 1 ] + "\nCost: " + eWeaponZombiePrice[ weaponIdx ][ 0 ] )
+    	return USE + " " + format( WEAPON_WALL_BUY_WEAPON, eWeaponZombieName[ weaponIdx ][ 1 ], eWeaponZombiePrice[ weaponIdx ][ 0 ] )
     }
 #endif // CLIENT
 

@@ -991,4 +991,5 @@ Scripts:
 	gamemodes/custom_zombie/sh_custom_zombie.nut
     gamemodes/custom_zombie/sh_custom_zombie_weapon_wall.nut
     gamemodes/custom_zombie/sh_custom_zombie_currency.nut
+    gamemodes/custom_zombie/sh_custom_zombie_mystery_box.nut
 ]
