@@ -19,8 +19,8 @@
 #if SERVER || CLIENT // Const
     const float  WEAPON_WALL_ON_USE_DURATION = 0.0
     const string USE                         = "%use%"
-    const string WEAPON_WALL_BUY_WEAPON      = "to buy %s\nCost: %i"
-    const string WEAPON_WALL_BUY_AMMO        = "to buy ammo for %s\nCost: %i"
+    const string WEAPON_WALL_BUY_WEAPON      = "to buy %s\nCost: %i $"
+    const string WEAPON_WALL_BUY_AMMO        = "to buy ammo for %s\nCost: %i $"
     const string WEAPON_WALL_SCRIPT_NAME     = "WeaponWallScriptName"
 #endif // SERVER || CLIENT
 

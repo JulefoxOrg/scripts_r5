@@ -7,6 +7,8 @@ global function ServerCallback_AddCurrencyToSpecifiedPlayer
 global function ServerCallback_RemoveCurrencyToSpecifiedPlayer
 global function ServerCallback_RUIInit
 
+const string CURRENCY = "%i $"
+
 
 void function ClCustomZombie_Init()
 {
@@ -47,7 +49,7 @@ void function ServerCallback_RUIInit()
 
     if(!IsValid( player.playerScore ))
     {
-        string playerScore = format( "%s %s", string( player.wallet ), "$" )
+        string playerScore = format( CURRENCY, player.wallet )
         player.playerScore = RuiCreate( $"ui/announcement_quick_right.rpak", screenAlignmentTopoScoreText, RUI_DRAW_HUD, RUI_SORT_SCREENFADE + 1 )
         RuiSetGameTime( player.playerScore, "startTime", Time() )
         RuiSetString( player.playerScore, "messageText", playerScore )
@@ -60,7 +62,7 @@ void function ServerCallback_RUIUpdateCurrency()
 {
     CustomZombieCurrency player = GetPlayerStruct( GetLocalClientPlayer() )
 
-    string playerScore = format( "%s %s", string( player.wallet ), "$" )
+    string playerScore = format( CURRENCY, player.wallet )
     if(IsValid( player.playerScore ))
     RuiSetString( player.playerScore, "messageText", playerScore )
 }

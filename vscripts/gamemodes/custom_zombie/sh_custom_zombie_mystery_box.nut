@@ -22,8 +22,8 @@
 #if SERVER || CLIENT // Const
     const float  MYSTERY_BOX_ON_USE_DURATION = 0.0
     const string USE                         = "%use%"
-    const string MYSTERY_BOX_BUY_WEAPON      = "to buy %s"
-    const string MYSTERY_BOX_BUY_AMMO        = "to buy ammo for %s"
+    const string MYSTERY_BOX_BUY_WEAPON      = "to buy %s $"
+    const string MYSTERY_BOX_BUY_AMMO        = "to buy ammo for %s $"
     const string MYSTERY_BOX_SCRIPT_NAME     = "MysteryBoxScriptName"
 #endif // SERVER || CLIENT
 
