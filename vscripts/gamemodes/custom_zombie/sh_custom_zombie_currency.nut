@@ -21,7 +21,7 @@ global CustomZombieCurrency customZombieCurrency
 void function ShCustomZombieCurrency_Init()
 {
     #if SERVER
-            AddSpawnCallback( "player", WalletInit )
+        AddSpawnCallback( "player", WalletInit )
     #endif // SERVER
 
     #if CLIENT
@@ -29,16 +29,17 @@ void function ShCustomZombieCurrency_Init()
     #endif // CLIENT
 
     #if SERVER
+        AddCallback_OnClientConnected( OnClientConnected )
         AddClientCommandCallback( "$", ClientCommand_GetPlayerCurrency )
         AddClientCommandCallback( "wa", ClientCommand_AddPlayerCurrency )
         AddClientCommandCallback( "wr", ClientCommand_RemovePlayerCurrency )
+        AddCallback_OnClientDisconnected( OnClientDisconnected )
     #endif // SERVER
 }
 
 void function WalletInit( entity player )
 {
     PlayerWalletInit( player )
-    AddCurrencyToPlayerWallet( player, 900000 )
 }
 
 CustomZombieCurrency function PlayerWalletInit( entity player )
@@ -53,7 +54,11 @@ CustomZombieCurrency function PlayerWalletInit( entity player )
 void function AddCurrencyToPlayerWallet( entity player, int currency )
 {
     CustomZombieCurrency wallet = customZombieCurrency.playersWallets[ player ]
-    wallet.wallet = wallet.wallet + currency 
+    wallet.wallet = wallet.wallet + currency
+
+    //#if !CLIENT
+    //    Remote_CallFunction_NonReplay( player, "ServerCallback_AddCurrencyToSpecifiedPlayer", player, currency )
+    //#endif
 
     printt( "Player now have: " + wallet.wallet + " $" )
 }
@@ -62,6 +67,10 @@ void function RemoveCurrencyToPlayerWallet( entity player, int currency )
 {
     CustomZombieCurrency wallet = customZombieCurrency.playersWallets[ player ]
     wallet.wallet = wallet.wallet - currency
+
+    //#if !CLIENT
+    //    Remote_CallFunction_NonReplay( player, "ServerCallback_RemoveCurrencyToSpecifiedPlayer", player, currency )
+    //#endif
 
     if ( wallet.wallet < 0 ) wallet.wallet = 0
 
@@ -82,13 +91,22 @@ bool function PlayerHasEnoughCurrency( entity player, int weaponPrice )
 }
 
 #if SERVER
+    void function OnClientConnected( entity player )
+    {
+        AddCurrencyToPlayerWallet( player, 900000 )
+    }
+
+    void function OnClientDisconnected( entity player )
+    {
+        if ( player in customZombieCurrency.playersWallets )
+		delete customZombieCurrency.playersWallets[player]
+    }
+
     bool function ClientCommand_GetPlayerCurrency( entity player, array<string> args )
     {
         CustomZombieCurrency wallet = customZombieCurrency.playersWallets[ player ]
 
-    	//printt( "Player have: " + wallet.wallet + " $" )
-
-        GetPlayerWalletString( player )
+    	printt( "Player have: " + wallet.wallet + " $" )
     
     	return true
     }
