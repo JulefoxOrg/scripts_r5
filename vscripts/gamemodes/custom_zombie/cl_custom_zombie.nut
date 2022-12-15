@@ -3,8 +3,7 @@ untyped
 
 global function ClCustomZombie_Init
 global function ServerCallback_OnClientDisconnected
-global function ServerCallback_AddScoreToPlayer
-global function ServerCallback_RemoveScoreToPlayer
+global function ServerCallback_UpdateClientScoreToPlayer
 global function ServerCallback_RUIInit
 
 const string SCORE = "%i $"
@@ -21,15 +20,7 @@ void function ServerCallback_OnClientDisconnected( entity player )
 	delete customZombieSystemGlobal.playerSystemGlobal[ player ]
 }
 
-void function ServerCallback_AddScoreToPlayer( entity player, int score )
-{
-    CustomZombieSystemGlobal totalScore = GetPlayerInSystemGlobal( player )
-    totalScore.score = score
-
-    ServerCallback_RUIUpdateCurrency()
-}
-
-void function ServerCallback_RemoveScoreToPlayer( entity player, int score )
+void function ServerCallback_UpdateClientScoreToPlayer( entity player, int score )
 {
     CustomZombieSystemGlobal totalScore = GetPlayerInSystemGlobal( player )
     totalScore.score = score

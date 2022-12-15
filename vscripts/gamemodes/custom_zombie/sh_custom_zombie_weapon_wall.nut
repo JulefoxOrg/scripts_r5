@@ -18,9 +18,11 @@
 
 #if SERVER || CLIENT // Const
     const float  WEAPON_WALL_ON_USE_DURATION = 0.0
-    const string USE                         = "%use%"
+    const string USE                         = "%use% "
     const string WEAPON_WALL_BUY_WEAPON      = "to buy %s\nCost: %i $"
     const string WEAPON_WALL_BUY_AMMO        = "to buy ammo for %s\nCost: %i $"
+    const string WEAPON_WALL_NO_SCORE_WEAPON = "Not enough score to buy %s\nCost: %i $"
+    const string WEAPON_WALL_NO_SCORE_AMMO   = "Not enough score to buy %s ammo\nCost: %i $"
     const string WEAPON_WALL_SCRIPT_NAME     = "WeaponWallScriptName"
 #endif // SERVER || CLIENT
 
@@ -268,8 +270,6 @@
 
             weapon.SetWeaponPrimaryClipCount( weapon.GetWeaponPrimaryClipCountMax() )
 
-            int lastBuyPrice = eWeaponZombiePrice[ weaponIdx ][ 1 ]
-
             RemoveScoreToPlayer( player, eWeaponZombiePrice[ weaponIdx ][ 1 ] )
             
             //SURVIVAL_AddToPlayerInventory( player, "bullet", 60 )
@@ -280,8 +280,6 @@
         {
             if ( !PlayerHasEnoughScore( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] ) )
                 return
-
-            int lastBuyPrice = eWeaponZombiePrice[ weaponIdx ][ 0 ]
 
             RemoveScoreToPlayer( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] )
         
@@ -306,12 +304,25 @@
 
     string function WeaponWall_TextOverride( entity usableWeaponWall )
     {
-        int weaponIdx = GetWeaponIdx( usableWeaponWall )
+        int weaponIdx = GetWeaponIdx( usableWeaponWall ) ; string returnedString
+        int weaponPrice = eWeaponZombiePrice[ weaponIdx ][ 0 ]
+        int weaponPriceAmmo = eWeaponZombiePrice[ weaponIdx ][ 1 ]
+        string weaponNameScript = eWeaponZombieName[ weaponIdx ][ 0 ]
+        string weaponName = eWeaponZombieName[ weaponIdx ][ 1 ]
+        string addInteractHint = "%use% "
 
-    	if ( PlayerHasWeapon( GetLocalViewPlayer(), eWeaponZombieName[ weaponIdx ][ 0 ] ) )
-    		return USE + " " + format( WEAPON_WALL_BUY_AMMO, eWeaponZombieName[ weaponIdx ][ 1 ], eWeaponZombiePrice[ weaponIdx ][ 1 ] )
+        if ( PlayerHasWeapon( GetLocalViewPlayer(), weaponNameScript ) )
+        {
+            //if ( !PlayerHasEnoughScore( GetLocalViewPlayer(), weaponPriceAmmo ) )
+            //    return format( WEAPON_WALL_NO_SCORE_AMMO, weaponName, weaponPriceAmmo )
 
-    	return USE + " " + format( WEAPON_WALL_BUY_WEAPON, eWeaponZombieName[ weaponIdx ][ 1 ], eWeaponZombiePrice[ weaponIdx ][ 0 ] )
+            return USE + format( WEAPON_WALL_BUY_AMMO, weaponName, weaponPriceAmmo )
+        }
+
+        //if ( !PlayerHasEnoughScore( GetLocalViewPlayer(), weaponPrice ) )
+        //    return format( WEAPON_WALL_NO_SCORE_WEAPON, weaponName, weaponPrice )
+
+        return USE + format( WEAPON_WALL_BUY_WEAPON, weaponName, weaponPrice )
     }
 #endif // CLIENT
 

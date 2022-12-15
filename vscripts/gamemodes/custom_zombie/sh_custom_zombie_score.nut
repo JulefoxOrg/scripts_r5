@@ -12,8 +12,8 @@ void function ShZombieScore_Init()
 {
     #if SERVER  
         AddClientCommandCallback( "$", ClientCommand_GetPlayerScore )
-        AddClientCommandCallback( "wa", ClientCommand_AddScoreToPlayer )
-        AddClientCommandCallback( "wr", ClientCommand_RemoveScoreToPlayer )
+        AddClientCommandCallback( "sa", ClientCommand_AddScoreToPlayer )
+        AddClientCommandCallback( "sr", ClientCommand_RemoveScoreToPlayer )
     #endif // SERVER
 }
 
@@ -23,7 +23,7 @@ void function AddScoreToPlayer( entity player, int score )
         CustomZombieSystemGlobal totalScore = GetPlayerInSystemGlobal( player )
         totalScore.score = totalScore.score + score
 
-        Remote_CallFunction_NonReplay( player, "ServerCallback_AddScoreToPlayer", player, totalScore.score )
+        Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateClientScoreToPlayer", player, totalScore.score )
     #endif // SERVER
 }
 
@@ -35,7 +35,7 @@ void function RemoveScoreToPlayer( entity player, int score )
 
         if ( totalScore.score < 0 ) totalScore.score = 0
 
-        Remote_CallFunction_NonReplay( player, "ServerCallback_RemoveScoreToPlayer", player, totalScore.score )
+        Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateClientScoreToPlayer", player, totalScore.score )
     #endif // SERVER
 }
 
