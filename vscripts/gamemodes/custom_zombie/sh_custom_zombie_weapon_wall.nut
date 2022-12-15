@@ -6,10 +6,13 @@
 #if SERVER // Global
     global function CreateWeaponWall
     global function GiveWeaponToPlayer
+    global function ServerWeaponWallUseSuccess
 #endif // SERVER
 
 #if SERVER || CLIENT // Global
     global function ShZombieWeaponWall_Init
+    
+    global function GetWeaponIdx
 #endif // SERVER || CLIENT
 
 #if CLIENT
@@ -304,12 +307,11 @@
 
     string function WeaponWall_TextOverride( entity usableWeaponWall )
     {
-        int weaponIdx = GetWeaponIdx( usableWeaponWall ) ; string returnedString
+        int weaponIdx = GetWeaponIdx( usableWeaponWall )
         int weaponPrice = eWeaponZombiePrice[ weaponIdx ][ 0 ]
         int weaponPriceAmmo = eWeaponZombiePrice[ weaponIdx ][ 1 ]
         string weaponNameScript = eWeaponZombieName[ weaponIdx ][ 0 ]
         string weaponName = eWeaponZombieName[ weaponIdx ][ 1 ]
-        string addInteractHint = "%use% "
 
         if ( PlayerHasWeapon( GetLocalViewPlayer(), weaponNameScript ) )
         {

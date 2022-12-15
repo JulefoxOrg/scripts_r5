@@ -44,9 +44,7 @@ void function OnClientConnected( entity player )
     AddScoreToPlayer( player, 8000 )
 
     #if NIGHTMARE_DEV
-        player.SetOrigin( < 3828, 4592, 4246 > )
-        player.SetAngles( < 0, 0, 0 > )
-        player.SetVelocity( < 0, 0, 0 > )
+        thread PlayerSetOrigin( player )
     #endif // NIGHTMARE_DEV
 
     // UI Init
@@ -54,6 +52,15 @@ void function OnClientConnected( entity player )
 
     // Give P2020 on start
     GiveWeaponToPlayer( player, "mp_weapon_semipistol", WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+}
+
+void function PlayerSetOrigin( entity player )
+{
+    wait 1.0
+
+    player.SetOrigin( < 3828, 4592, -4246 > )
+    player.SetAngles( < 0, 0, 0 > )
+    player.SetVelocity( < 0, 0, 0 > )
 }
 
 void function OnClientDisconnected( entity player )

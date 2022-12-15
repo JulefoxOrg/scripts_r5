@@ -234,6 +234,8 @@ void function RemoteFunctions_Init_Begin()
             Remote_RegisterClientFunction( "ServerCallback_UpdateClientScoreToPlayer", "entity", "int", INT_MIN, INT_MAX )
             Remote_RegisterClientFunction( "ServerCallback_RUIInit" )
             Remote_RegisterClientFunction( "ServerCallback_SetMysteryBoxUsable", "entity", "bool" )
+            Remote_RegisterClientFunction( "ServerCallback_SetWeaponMysteryBoxUsable", "entity", "bool" )
+            Remote_RegisterClientFunction( "ServerCallback_AddWeaponMysteryBoxUsableToClient", "entity", "entity" )
 
 			//
 			Remote_RegisterClientFunction( "ServerCallback_SendDeathRecapData", "int", -1, INT_MAX, "int", -1, INT_MAX, "int", -1, INT_MAX, "int", INT_MIN, INT_MAX, "int", -1, INT_MAX, "int", 0, INT_MAX, "int", 0, INT_MAX, "float", 0.0, 1.0, 32, "float", 0.0, 1.0, 32, "float", 0.0, 86400.0, 32 )
