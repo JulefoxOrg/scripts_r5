@@ -9,6 +9,8 @@
 
 #if SERVER || CLIENT // Global
     global function ShZombieMysteryBox_Init
+
+    global function GetMysteryBox
 #endif // SERVER || CLIENT
 
 #if CLIENT
@@ -27,39 +29,57 @@
     const string MYSTERY_BOX_SCRIPT_NAME     = "MysteryBoxScriptName"
 #endif // SERVER || CLIENT
 
-struct
+global struct CustomZombieMysteryBox
 {
-    entity mysteryBox
     entity mysteryBoxFx
     entity mysteryBoxScriptMover
     bool isUsable = false
+    array < entity > mysteryBoxArray
+    table < entity, CustomZombieMysteryBox > mysteryBox
 }
-mysteryBoxStruct
+global CustomZombieMysteryBox customZombieMysteryBox
+
 
 #if SERVER || CLIENT
     void function ShZombieMysteryBox_Init()
     {
         #if SERVER
-            AddSpawnCallback( "prop_dynamic", usableMysteryBox )
+            AddSpawnCallback( "prop_dynamic", UsableMysteryBox )
         #endif // SERVER
 
         #if CLIENT
-            AddCreateCallback( "prop_dynamic", usableMysteryBox )
+            AddCreateCallback( "prop_dynamic", UsableMysteryBox )
         #endif // CLIENT
     }
 #endif  // SERVER || CLIENT
 
 #if SERVER || CLIENT
-    void function usableMysteryBox( entity usableMysteryBox )
+    void function UsableMysteryBox( entity usableMysteryBox )
     {
         if ( !IsValidusableMysteryBoxEnt( usableMysteryBox ) )
             return
 
+        AddMysteryBox( usableMysteryBox )
         SetMysteryBoxUsable( usableMysteryBox )
 
         #if SERVER
             SetMysteryBoxFx( usableMysteryBox )
         #endif // SERVER
+    }
+
+    CustomZombieMysteryBox function AddMysteryBox( entity usableMysteryBox )
+    {
+        CustomZombieMysteryBox newMysteryBox
+
+        customZombieMysteryBox.mysteryBox[ usableMysteryBox ] <- newMysteryBox
+        customZombieMysteryBox.mysteryBoxArray.append( usableMysteryBox )
+
+        return customZombieMysteryBox.mysteryBox[ usableMysteryBox ]
+    }
+
+    CustomZombieMysteryBox function GetMysteryBox( entity usableMysteryBox )
+    {
+        return customZombieMysteryBox.mysteryBox[ usableMysteryBox ]
     }
 
     bool function IsValidusableMysteryBoxEnt( entity ent )
@@ -70,7 +90,7 @@ mysteryBoxStruct
         return false
     }
 
-    bool function usableMysteryBox_CanUse( entity player, entity usableMysteryBox )
+    bool function UsableMysteryBox_CanUse( entity player, entity usableMysteryBox )
     {
         if ( !SURVIVAL_PlayerCanUse_AnimatedInteraction( player, usableMysteryBox ) )
             return false
@@ -85,19 +105,20 @@ mysteryBoxStruct
             usableMysteryBox.SetUsableByGroup( "pilot" )
             usableMysteryBox.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
             usableMysteryBox.SetUsablePriority( USABLE_PRIORITY_MEDIUM )
-            mysteryBoxStruct.isUsable = true
         #endif // SERVER
 
-        SetCallback_CanUseEntityCallback( usableMysteryBox, usableMysteryBox_CanUse )
+        GetMysteryBox( usableMysteryBox ).isUsable = true
+
+        SetCallback_CanUseEntityCallback( usableMysteryBox, UsableMysteryBox_CanUse )
         AddCallback_OnUseEntity( usableMysteryBox, OnUseProcessingMysteryBox )
 
         #if CLIENT
-	        AddEntityCallback_GetUseEntOverrideText( usableMysteryBox, MysteryBox_TextOverride )
-	    #endif // CLIENT
+            AddEntityCallback_GetUseEntOverrideText( usableMysteryBox, MysteryBox_TextOverride )
+        #endif // CLIENT
     }
 
     void function OnUseProcessingMysteryBox( entity usableMysteryBox, entity playerUser, int useInputFlags )
-    {	
+    {
         if ( !( useInputFlags & USE_INPUT_LONG ) )
             return
 
@@ -117,16 +138,23 @@ mysteryBoxStruct
 
     void function MysteryBoxUseSuccess( entity usableMysteryBox, entity player, ExtendedUseSettings settings )
     {
-        #if SERVER
-            if ( !PlayerHasEnoughScore( player, MYSTERY_BOX_COST ) )
-                return
+        if ( !GetMysteryBox( usableMysteryBox ).isUsable )
+            return
+        
+        if ( !PlayerHasEnoughScore( player, MYSTERY_BOX_COST ) )
+            return
 
-	        EmitSoundOnEntity( usableMysteryBox, SOUND_LOOT_BIN_OPEN )
+        GetMysteryBox( usableMysteryBox ).isUsable = false
+        #if SERVER
+            EmitSoundOnEntity( usableMysteryBox, SOUND_LOOT_BIN_OPEN )
 
             RemoveScoreToPlayer( player, MYSTERY_BOX_COST )
 
             waitthread MysteryBox_PlayOpenSequence( usableMysteryBox, player )
-            thread MysteryBox_Thread( usableMysteryBox, player )
+            waitthread MysteryBox_Thread( usableMysteryBox, player )
+            waitthread MysteryBox_PlayCloseSequence( usableMysteryBox )
+            GetMysteryBox( usableMysteryBox ).isUsable = true
+            Remote_CallFunction_NonReplay( player, "ServerCallback_SetMysteryBoxUsable", usableMysteryBox, true )
         #endif
     }
 #endif // SERVER || CLIENT
@@ -143,9 +171,9 @@ mysteryBoxStruct
 
     string function MysteryBox_TextOverride( entity usableMysteryBox )
     {
-        if ( !mysteryBoxStruct.isUsable )
+        if ( !GetMysteryBox( usableMysteryBox ).isUsable )
             return ""
-
+        
         return USE + " " + format( MYSTERY_BOX_USE, MYSTERY_BOX_COST )
     }
 #endif // CLIENT
@@ -155,59 +183,61 @@ mysteryBoxStruct
     void function SetMysteryBoxFx( entity usableMysteryBox )
     {
         PrecacheParticleSystem( MYSTERY_BOX_BEAM )
-        mysteryBoxStruct.mysteryBoxFx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( MYSTERY_BOX_BEAM ), usableMysteryBox.GetOrigin(), < 90, 0, 0 > )
+        GetMysteryBox( usableMysteryBox ).mysteryBoxFx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( MYSTERY_BOX_BEAM ), usableMysteryBox.GetOrigin(), < 90, 0, 0 > )
     }
 
     void function MysteryBox_Thread( entity usableMysteryBox, entity player )
     {
-        mysteryBoxStruct.isUsable = false
-        usableMysteryBox.SetParent( mysteryBoxStruct.mysteryBoxScriptMover )
-        usableMysteryBox.UnsetUsable()
-        mysteryBoxStruct.mysteryBoxScriptMover.NonPhysicsMoveTo( usableMysteryBox.GetOrigin() + < 0, 0, 1000 >, 20, 10, 10)
-        wait 20
-        usableMysteryBox.ClearParent()
-        usableMysteryBox.SetUsable()
-        mysteryBoxStruct.isUsable = true
-    }
+        entity weapon = CreateWeaponWall( 0, usableMysteryBox.GetOrigin() + < 0, 0, 20 >, usableMysteryBox.GetAngles() + < 0, 90, 0 >, false )
+        entity script_mover = CreateScriptMover( usableMysteryBox.GetOrigin() + < 0, 0, 10 >, usableMysteryBox.GetAngles() )
+        weapon.SetParent( script_mover )
+        weapon.SetModelScale( 1.2 )
 
-    void function ServerMysteryBoxUseSuccess( entity usableMysteryBox, entity player )
-    {
+        float currentTime = Time()
+        float startTime = currentTime
+        float endTime = startTime + 5
 
+        script_mover.NonPhysicsMoveTo( usableMysteryBox.GetOrigin() + < 0, 0, 45 >, 3, 0, 3 )
+
+        while ( endTime > currentTime )
+        {
+            weapon.SetModel( eWeaponZombieModel[ RandomIntRange( 0, eWeaponZombieIdx.len() - 1 ) ] )
+            wait 0.1
+            currentTime = Time()
+        }
+
+        wait 3
+        weapon.Destroy()
     }
 
     entity function CreateMysteryBox( vector origin, vector angles )
     {
-	    entity mysteryBox = CreateEntity( "prop_dynamic" )
-	    mysteryBox.SetScriptName( MYSTERY_BOX_SCRIPT_NAME )
-	    mysteryBox.SetValueForModelKey( LOOT_BIN_MODEL )
-	    mysteryBox.SetOrigin( origin )
-	    mysteryBox.SetAngles( angles )
-	    mysteryBox.kv.solid = SOLID_VPHYSICS
+        entity mysteryBox = CreateEntity( "prop_dynamic" )
+        mysteryBox.SetScriptName( MYSTERY_BOX_SCRIPT_NAME )
+        mysteryBox.SetValueForModelKey( LOOT_BIN_MODEL )
+        mysteryBox.SetOrigin( origin )
+        mysteryBox.SetAngles( angles )
+        mysteryBox.kv.solid = SOLID_VPHYSICS
 
-	    DispatchSpawn( mysteryBox )
+        DispatchSpawn( mysteryBox )
 
-        // Script Mover
-        entity scriptMover = CreateScriptMover( origin, angles )
-        mysteryBoxStruct.mysteryBoxScriptMover = scriptMover
-
-	    return mysteryBox
+        return mysteryBox
     }
 
     void function MysteryBox_PlayOpenSequence( entity mysteryBox, entity player )
     {
-        GradeFlagsSet( mysteryBox, eGradeFlags.IS_BUSY )
-
         if ( !mysteryBox.e.hasBeenOpened )
         {
-        	mysteryBox.e.hasBeenOpened = true
+            mysteryBox.e.hasBeenOpened = true
 
-        	StopSoundOnEntity( mysteryBox, SOUND_LOOT_BIN_IDLE )
+            StopSoundOnEntity( mysteryBox, SOUND_LOOT_BIN_IDLE )
         }
 
-        GradeFlagsSet( mysteryBox, eGradeFlags.IS_OPEN )
+        waitthread PlayAnim( mysteryBox, "loot_bin_01_open" )
+    }
 
-	    waitthread PlayAnim( mysteryBox, "loot_bin_01_open" )
-
-	    GradeFlagsClear( mysteryBox, eGradeFlags.IS_BUSY )
+    void function MysteryBox_PlayCloseSequence( entity mysteryBox )
+    {
+        waitthread PlayAnim( mysteryBox, "loot_bin_01_close" )
     }
 #endif

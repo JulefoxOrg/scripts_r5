@@ -5,6 +5,7 @@ global function ClCustomZombie_Init
 global function ServerCallback_OnClientDisconnected
 global function ServerCallback_UpdateClientScoreToPlayer
 global function ServerCallback_RUIInit
+global function ServerCallback_SetMysteryBoxUsable
 
 const string SCORE = "%i $"
 
@@ -54,4 +55,9 @@ void function ServerCallback_RUIUpdateCurrency()
     string playerScore = format( SCORE, player.score )
     if(IsValid( player.playerScoreUI ))
     RuiSetString( player.playerScoreUI, "messageText", playerScore )
+}
+
+void function ServerCallback_SetMysteryBoxUsable( entity usableMysteryBox, bool isUsable )
+{
+    GetMysteryBox( usableMysteryBox ).isUsable = isUsable
 }

@@ -18,7 +18,7 @@
 
 #if SERVER || CLIENT // Const
     const float  WEAPON_WALL_ON_USE_DURATION = 0.0
-    const string USE                         = "%use% "
+    const string USE                         = "Press %use% "
     const string WEAPON_WALL_BUY_WEAPON      = "to buy %s\nCost: %i $"
     const string WEAPON_WALL_BUY_AMMO        = "to buy ammo for %s\nCost: %i $"
     const string WEAPON_WALL_NO_SCORE_WEAPON = "Not enough score to buy %s\nCost: %i $"
@@ -73,7 +73,7 @@
         COUNT
     }
 
-    table< int, asset > eWeaponZombieModel =
+    global table< int, asset > eWeaponZombieModel =
     {
         [ eWeaponZombieIdx.FLATLINE ] = $"mdl/weapons/vinson/w_vinson.rmdl",
         [ eWeaponZombieIdx.SCOUT ] = $"mdl/weapons/g2/w_g2a4.rmdl",
@@ -104,7 +104,7 @@
         [ eWeaponZombieIdx.THERMITE ] = $"mdl/weapons/grenades/w_thermite_grenade.rmdl"
     }
 
-    table< int, array< string > > eWeaponZombieName =
+    global table< int, array< string > > eWeaponZombieName =
     {
         [ eWeaponZombieIdx.FLATLINE ] = [ "mp_weapon_vinson", "Flatline" ],
         [ eWeaponZombieIdx.SCOUT ] = [ "mp_weapon_g2", "G7 Scout" ],
@@ -135,7 +135,7 @@
         [ eWeaponZombieIdx.THERMITE ] = [ "mp_weapon_thermite_grenade", "Thermite Grenade" ]
     }
 
-    table< int, array< int > > eWeaponZombiePrice =
+    global table< int, array< int > > eWeaponZombiePrice =
     {
         [ eWeaponZombieIdx.FLATLINE ] = [ 1250, 500 ],
         [ eWeaponZombieIdx.SCOUT ] = [ 750, 200 ],
@@ -172,17 +172,17 @@
     void function ShZombieWeaponWall_Init()
     {
         #if SERVER
-            AddSpawnCallback( "prop_dynamic", usableWeaponWall )
+            AddSpawnCallback( "prop_dynamic", UsableWeaponWall )
         #endif // SERVER
 
         #if CLIENT
-            AddCreateCallback( "prop_dynamic", usableWeaponWall )
+            AddCreateCallback( "prop_dynamic", UsableWeaponWall )
         #endif // CLIENT
     }
 #endif  // SERVER || CLIENT
 
 #if SERVER || CLIENT
-    void function usableWeaponWall( entity usableWeaponWall )
+    void function UsableWeaponWall( entity usableWeaponWall )
     {
         if ( !IsValidusableWeaponWallEnt( usableWeaponWall ) )
             return
@@ -198,7 +198,7 @@
         return false
     }
 
-    bool function usableWeaponWall_CanUse( entity player, entity usableWeaponWall )
+    bool function UsableWeaponWall_CanUse( entity player, entity usableWeaponWall )
     {
         if ( !SURVIVAL_PlayerCanUse_AnimatedInteraction( player, usableWeaponWall ) )
             return false
@@ -215,7 +215,7 @@
             usableWeaponWall.SetUsablePriority( USABLE_PRIORITY_MEDIUM )
         #endif // SERVER
 
-        SetCallback_CanUseEntityCallback( usableWeaponWall, usableWeaponWall_CanUse )
+        SetCallback_CanUseEntityCallback( usableWeaponWall, UsableWeaponWall_CanUse )
         AddCallback_OnUseEntity( usableWeaponWall, OnUseProcessingWeaponWall )
 
         #if CLIENT
@@ -401,7 +401,7 @@
         return weapon
     }
 
-    entity function CreateWeaponWall( int index, vector pos, vector ang )
+    entity function CreateWeaponWall( int index, vector pos, vector ang, bool isHighlighted = true )
     {
         entity weaponWall = CreateEntity( "prop_dynamic" )
         weaponWall.SetModel( eWeaponZombieModel[ index ] )
@@ -411,15 +411,20 @@
         weaponWall.SetOrigin( pos )
         weaponWall.SetAngles( ang )
 
+        if ( isHighlighted ) SetWeaponWallHighlight( weaponWall )
+
+        DispatchSpawn( weaponWall )
+        
+        return weaponWall
+    }
+
+    void function SetWeaponWallHighlight( entity weaponWall )
+    {
         int contextId = 0
 		weaponWall.Highlight_SetFunctions( contextId, 0, true, HIGHLIGHT_OUTLINE_INTERACT_BUTTON, 1, 0, false )
 		weaponWall.Highlight_SetParam( contextId, 0, HIGHLIGHT_COLOR_INTERACT )
 		weaponWall.Highlight_SetCurrentContext( contextId )
 		weaponWall.Highlight_ShowInside( 0.0 )
 		weaponWall.Highlight_ShowOutline( 0.0 )
-
-        DispatchSpawn( weaponWall )
-        
-        return weaponWall
     }
 #endif

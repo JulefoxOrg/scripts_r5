@@ -35,7 +35,7 @@ void function WeaponWalls()
         }
     }
 
-    CreateMysteryBox( <3482.94702, 6998.60303, -4303.96875>, < 0, -90, 0 > )
+    CreateMysteryBox( < 3910.18848, 5499.14404, -4295.94385 >, < 0, -140, 0 > )
 }
 
 void function OnClientConnected( entity player )
