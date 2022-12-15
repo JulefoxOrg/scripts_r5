@@ -87,6 +87,7 @@
         customZombieMysteryBox.mysteryBoxArray.append( usableMysteryBox )
 
         customZombieMysteryBox.targetName = UniqueString( "MysteryBox" )
+        SetTargetName( usableMysteryBox, customZombieMysteryBox.targetName )
 
         return customZombieMysteryBox.mysteryBox[ usableMysteryBox ]
     }
@@ -96,7 +97,7 @@
         return customZombieMysteryBox.mysteryBox[ usableMysteryBox ]
     }
 
-    entity function GetMysteryBoxFromTargetName( string targetName )
+    entity function GetMysteryBoxEntFromTargetName( string targetName )
     {
         entity mysteryBox
 
@@ -219,7 +220,7 @@
 
         GetMysteryBox( usableMysteryBox ).isUsable = false
         GetMysteryBox( usableMysteryBox ).isUsableWeapon = false
-        
+
         #if SERVER
             EmitSoundOnEntity( usableMysteryBox, SOUND_LOOT_BIN_OPEN )
 
@@ -237,7 +238,7 @@
 
     void function WeaponMysteryBoxUseSuccess( entity usableWeaponMysteryBox, entity player, ExtendedUseSettings settings )
     {
-        if ( !GetMysteryBox( GetMysteryBoxFromTargetName( usableWeaponMysteryBox.GetTargetName() ) ).isUsableWeapon )
+        if ( !GetMysteryBox( GetMysteryBoxEntFromTargetName( usableWeaponMysteryBox.GetTargetName() ) ).isUsableWeapon )
             return
         
         #if SERVER
@@ -265,7 +266,7 @@
 
     string function WeaponMysteryBox_TextOverride( entity usableWeaponMysteryBox )
     {
-        if ( !GetMysteryBox( GetMysteryBoxFromTargetName( usableWeaponMysteryBox.GetTargetName() ) ).isUsableWeapon )
+        if ( !GetMysteryBox( GetMysteryBoxEntFromTargetName( usableWeaponMysteryBox.GetTargetName() ) ).isUsableWeapon )
             return ""
         
         int weaponIdx = GetWeaponIdx( usableWeaponMysteryBox )
