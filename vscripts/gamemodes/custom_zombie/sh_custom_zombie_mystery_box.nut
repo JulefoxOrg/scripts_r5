@@ -117,14 +117,13 @@ mysteryBoxStruct
 
     void function MysteryBoxUseSuccess( entity usableMysteryBox, entity player, ExtendedUseSettings settings )
     {
-        printt("success")
         #if SERVER
-            if ( !PlayerHasEnoughCurrency( player, MYSTERY_BOX_COST ) )
+            if ( !PlayerHasEnoughScore( player, MYSTERY_BOX_COST ) )
                 return
 
 	        EmitSoundOnEntity( usableMysteryBox, SOUND_LOOT_BIN_OPEN )
 
-            RemoveCurrencyToPlayerWallet( player, MYSTERY_BOX_COST )
+            RemoveScoreToPlayer( player, MYSTERY_BOX_COST )
 
             waitthread MysteryBox_PlayOpenSequence( usableMysteryBox, player )
             thread MysteryBox_Thread( usableMysteryBox, player )

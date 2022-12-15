@@ -3,11 +3,11 @@ untyped
 
 global function ClCustomZombie_Init
 global function ServerCallback_OnClientDisconnected
-global function ServerCallback_AddCurrencyToSpecifiedPlayer
-global function ServerCallback_RemoveCurrencyToSpecifiedPlayer
+global function ServerCallback_AddScoreToPlayer
+global function ServerCallback_RemoveScoreToPlayer
 global function ServerCallback_RUIInit
 
-const string CURRENCY = "%i $"
+const string SCORE = "%i $"
 
 
 void function ClCustomZombie_Init()
@@ -17,52 +17,50 @@ void function ClCustomZombie_Init()
 
 void function ServerCallback_OnClientDisconnected( entity player )
 {
-    if ( player in customZombieCurrency.playersWallets )
-	delete customZombieCurrency.playersWallets[player]
+    if ( player in customZombieSystemGlobal.playerSystemGlobal )
+	delete customZombieSystemGlobal.playerSystemGlobal[ player ]
 }
 
-void function ServerCallback_AddCurrencyToSpecifiedPlayer( entity player, int currency )
+void function ServerCallback_AddScoreToPlayer( entity player, int score )
 {
-    CustomZombieCurrency wallet = GetPlayerStruct( player )
-    wallet.wallet = wallet.wallet + currency
+    CustomZombieSystemGlobal totalScore = GetPlayerInSystemGlobal( player )
+    totalScore.score = score
 
     ServerCallback_RUIUpdateCurrency()
 }
 
-void function ServerCallback_RemoveCurrencyToSpecifiedPlayer( entity player, int currency )
+void function ServerCallback_RemoveScoreToPlayer( entity player, int score )
 {
-    CustomZombieCurrency wallet = GetPlayerStruct( player )
-    wallet.wallet = wallet.wallet - currency
-
-    if ( wallet.wallet < 0 ) wallet.wallet = 0
+    CustomZombieSystemGlobal totalScore = GetPlayerInSystemGlobal( player )
+    totalScore.score = score
 
     ServerCallback_RUIUpdateCurrency()
 }
 
 void function ServerCallback_RUIInit()
 {
-    CustomZombieCurrency player = GetPlayerStruct( GetLocalClientPlayer() )
+    CustomZombieSystemGlobal player = GetPlayerInSystemGlobal( GetLocalClientPlayer() )
 
     UISize screenSize = GetScreenSize()
 
     var screenAlignmentTopoScoreText = RuiTopology_CreatePlane( <(screenSize.width / 2) + 200, 0, 0>, <1000, 0, 0>, <0, 1720, 0>, false )
 
-    if(!IsValid( player.playerScore ))
+    if(!IsValid( player.playerScoreUI ))
     {
-        string playerScore = format( CURRENCY, player.wallet )
-        player.playerScore = RuiCreate( $"ui/announcement_quick_right.rpak", screenAlignmentTopoScoreText, RUI_DRAW_HUD, RUI_SORT_SCREENFADE + 1 )
-        RuiSetGameTime( player.playerScore, "startTime", Time() )
-        RuiSetString( player.playerScore, "messageText", playerScore )
-        RuiSetFloat( player.playerScore, "duration", 9999999 )
-        RuiSetFloat3( player.playerScore, "eventColor", SrgbToLinear( <128, 188, 255> ) )
+        string playerScore = format( SCORE, player.score )
+        player.playerScoreUI = RuiCreate( $"ui/announcement_quick_right.rpak", screenAlignmentTopoScoreText, RUI_DRAW_HUD, RUI_SORT_SCREENFADE + 1 )
+        RuiSetGameTime( player.playerScoreUI, "startTime", Time() )
+        RuiSetString( player.playerScoreUI, "messageText", playerScore )
+        RuiSetFloat( player.playerScoreUI, "duration", 9999999 )
+        RuiSetFloat3( player.playerScoreUI, "eventColor", SrgbToLinear( <128, 188, 255> ) )
     }
 }
 
 void function ServerCallback_RUIUpdateCurrency()
 {
-    CustomZombieCurrency player = GetPlayerStruct( GetLocalClientPlayer() )
+    CustomZombieSystemGlobal player = GetPlayerInSystemGlobal( GetLocalClientPlayer() )
 
-    string playerScore = format( CURRENCY, player.wallet )
-    if(IsValid( player.playerScore ))
-    RuiSetString( player.playerScore, "messageText", playerScore )
+    string playerScore = format( SCORE, player.score )
+    if(IsValid( player.playerScoreUI ))
+    RuiSetString( player.playerScoreUI, "messageText", playerScore )
 }

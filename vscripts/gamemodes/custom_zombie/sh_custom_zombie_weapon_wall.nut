@@ -261,7 +261,7 @@
 
         if ( PlayerHasWeapon( player, weaponName ) )
         {
-            if ( !PlayerHasEnoughCurrency( player, eWeaponZombiePrice[ weaponIdx ][ 1 ] ) )
+            if ( !PlayerHasEnoughScore( player, eWeaponZombiePrice[ weaponIdx ][ 1 ] ) )
                 return
 
             entity weapon = player.GetNormalWeapon( SURVIVAL_GetActiveWeaponSlot( player ) )
@@ -270,7 +270,7 @@
 
             int lastBuyPrice = eWeaponZombiePrice[ weaponIdx ][ 1 ]
 
-            RemoveCurrencyToPlayerWallet( player, eWeaponZombiePrice[ weaponIdx ][ 1 ] )
+            RemoveScoreToPlayer( player, eWeaponZombiePrice[ weaponIdx ][ 1 ] )
             
             //SURVIVAL_AddToPlayerInventory( player, "bullet", 60 )
 
@@ -278,12 +278,12 @@
         }
         else
         {
-            if ( !PlayerHasEnoughCurrency( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] ) )
+            if ( !PlayerHasEnoughScore( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] ) )
                 return
 
             int lastBuyPrice = eWeaponZombiePrice[ weaponIdx ][ 0 ]
 
-            RemoveCurrencyToPlayerWallet( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] )
+            RemoveScoreToPlayer( player, eWeaponZombiePrice[ weaponIdx ][ 0 ] )
         
             #if SERVER
                 ServerWeaponWallUseSuccess( usableWeaponWall, player )
