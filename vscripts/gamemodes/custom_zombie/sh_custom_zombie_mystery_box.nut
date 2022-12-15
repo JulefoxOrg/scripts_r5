@@ -87,7 +87,10 @@
         customZombieMysteryBox.mysteryBoxArray.append( usableMysteryBox )
 
         customZombieMysteryBox.targetName = UniqueString( "MysteryBox" )
-        SetTargetName( usableMysteryBox, customZombieMysteryBox.targetName )
+
+        #if SERVER
+            SetTargetName( usableMysteryBox, customZombieMysteryBox.targetName )
+        #endif // SERVER
 
         return customZombieMysteryBox.mysteryBox[ usableMysteryBox ]
     }

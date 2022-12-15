@@ -40,18 +40,20 @@ void function WeaponWalls()
 
 void function OnClientConnected( entity player )
 {
-    // Add $ on start
-    AddScoreToPlayer( player, 8000 )
-
     #if NIGHTMARE_DEV
+        // Add $ on start + Set player origin
+        AddScoreToPlayer( player, 10000 )
         thread PlayerSetOrigin( player )
+    #else
+        // Add $ on start
+        AddScoreToPlayer( player, 500 )
+
+        // Give P2020 on start
+        GiveWeaponToPlayer( player, "mp_weapon_semipistol", WEAPON_INVENTORY_SLOT_PRIMARY_0 )
     #endif // NIGHTMARE_DEV
 
     // UI Init
     Remote_CallFunction_NonReplay( player, "ServerCallback_RUIInit" )
-
-    // Give P2020 on start
-    GiveWeaponToPlayer( player, "mp_weapon_semipistol", WEAPON_INVENTORY_SLOT_PRIMARY_0 )
 }
 
 void function PlayerSetOrigin( entity player )
