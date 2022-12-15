@@ -11,7 +11,7 @@
 
 #if SERVER || CLIENT // Global
     global function ShZombieWeaponWall_Init
-    
+
     global function GetWeaponIdx
 #endif // SERVER || CLIENT
 
@@ -413,20 +413,11 @@
         weaponWall.SetOrigin( pos )
         weaponWall.SetAngles( ang )
 
-        if ( isHighlighted ) SetWeaponWallHighlight( weaponWall )
+        if ( isHighlighted )
+            SetSurvivalPropHighlight( weaponWall, "survival_item_weapon", false )
 
         DispatchSpawn( weaponWall )
         
         return weaponWall
-    }
-
-    void function SetWeaponWallHighlight( entity weaponWall )
-    {
-        int contextId = 0
-		weaponWall.Highlight_SetFunctions( contextId, 0, true, HIGHLIGHT_OUTLINE_INTERACT_BUTTON, 1, 0, false )
-		weaponWall.Highlight_SetParam( contextId, 0, HIGHLIGHT_COLOR_INTERACT )
-		weaponWall.Highlight_SetCurrentContext( contextId )
-		weaponWall.Highlight_ShowInside( 0.0 )
-		weaponWall.Highlight_ShowOutline( 0.0 )
     }
 #endif

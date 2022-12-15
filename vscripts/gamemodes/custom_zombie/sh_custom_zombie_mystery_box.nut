@@ -1,17 +1,14 @@
 
 #if SERVER || CLIENT
     untyped
-#endif // SERVER || CLIENT
 
 #if SERVER // Global
     global function CreateMysteryBox
 #endif // SERVER
 
-#if SERVER || CLIENT // Global
     global function ShZombieMysteryBox_Init
 
     global function GetMysteryBox
-#endif // SERVER || CLIENT
 
 #if CLIENT
     const asset MYSTERY_BOX_DISPLAYRUI = $"ui/extended_use_hint.rpak"
@@ -21,7 +18,6 @@
     const asset MYSTERY_BOX_BEAM = $"P_ar_hot_zone_far"
 #endif // SERVER
 
-#if SERVER || CLIENT // Const
     const int    MYSTERY_BOX_COST                   = 950
     const float  MYSTERY_BOX_ON_USE_DURATION        = 0.0
     const float  MYSTERY_BOX_WEAPON_ON_USE_DURATION = 0.0
@@ -34,22 +30,20 @@
     const vector MYSTERY_BOX_WEAPON_ORIGIN_OFFSET   = < 0, 0, 20 >
     const vector MYSTERY_BOX_WEAPON_ANGLES_OFFSET   = < 0, 90, 0 >
     const vector MYSTERY_BOX_WEAPON_MOVE_TO         = < 0, 0, 30 >
-#endif // SERVER || CLIENT
 
-global struct CustomZombieMysteryBox
-{
-    entity mysteryBoxFx
-    entity mysteryBoxWeapon
-    bool isUsable = false
-    bool isUsableWeapon = false
-    string targetName
-    array < entity > mysteryBoxArray
-    table < entity, CustomZombieMysteryBox > mysteryBox
-}
-global CustomZombieMysteryBox customZombieMysteryBox
+    global struct CustomZombieMysteryBox
+    {
+        entity mysteryBoxFx
+        entity mysteryBoxWeapon
+        bool isUsable = false
+        bool isUsableWeapon = false
+        string targetName
+        array < entity > mysteryBoxArray
+        table < entity, CustomZombieMysteryBox > mysteryBox
+    }
+    global CustomZombieMysteryBox customZombieMysteryBox
 
 
-#if SERVER || CLIENT
     void function ShZombieMysteryBox_Init()
     {
         #if SERVER
@@ -62,9 +56,7 @@ global CustomZombieMysteryBox customZombieMysteryBox
             AddCreateCallback( "prop_dynamic", UsableWeaponMysteryBox )
         #endif // CLIENT
     }
-#endif  // SERVER || CLIENT
 
-#if SERVER || CLIENT
     void function UsableMysteryBox( entity usableMysteryBox )
     {
         if ( !IsValidUsableMysteryBoxEnt( usableMysteryBox ) )
@@ -227,6 +219,7 @@ global CustomZombieMysteryBox customZombieMysteryBox
 
         GetMysteryBox( usableMysteryBox ).isUsable = false
         GetMysteryBox( usableMysteryBox ).isUsableWeapon = false
+        
         #if SERVER
             EmitSoundOnEntity( usableMysteryBox, SOUND_LOOT_BIN_OPEN )
 
@@ -251,7 +244,6 @@ global CustomZombieMysteryBox customZombieMysteryBox
             ServerWeaponWallUseSuccess( usableWeaponMysteryBox, player )
         #endif // SERVER
     }
-#endif // SERVER || CLIENT
 
 
 #if CLIENT
@@ -296,13 +288,15 @@ global CustomZombieMysteryBox customZombieMysteryBox
         vector mysteryBoxOrigin = usableMysteryBox.GetOrigin()
         vector mysteryBoxAngles = usableMysteryBox.GetAngles()
 
-        entity weapon = GetMysteryBox( usableMysteryBox ).mysteryBoxWeapon
+        CustomZombieMysteryBox mysteryBox = GetMysteryBox( usableMysteryBox )
 
-        weapon = CreateWeaponInMysteryBox( 0, mysteryBoxOrigin + MYSTERY_BOX_WEAPON_ORIGIN_OFFSET, mysteryBoxAngles + MYSTERY_BOX_WEAPON_ANGLES_OFFSET )
-        SetTargetName( weapon, GetMysteryBox( usableMysteryBox ).targetName )
-        Remote_CallFunction_NonReplay( player, "ServerCallback_AddWeaponMysteryBoxUsableToClient", usableMysteryBox, weapon )
-        GetMysteryBox( usableMysteryBox ).isUsableWeapon = false
+        entity weapon = mysteryBox.mysteryBoxWeapon
+        weapon = CreateWeaponInMysteryBox( 0, mysteryBoxOrigin + MYSTERY_BOX_WEAPON_ORIGIN_OFFSET, mysteryBoxAngles + MYSTERY_BOX_WEAPON_ANGLES_OFFSET, mysteryBox.targetName )
+
+        mysteryBox.isUsableWeapon = false
+
         entity script_mover = CreateScriptMover( mysteryBoxOrigin + MYSTERY_BOX_WEAPON_ORIGIN_OFFSET, mysteryBoxAngles + MYSTERY_BOX_WEAPON_ANGLES_OFFSET )
+
         weapon.SetParent( script_mover )
 
         float currentTime = Time()
@@ -317,10 +311,12 @@ global CustomZombieMysteryBox customZombieMysteryBox
             wait 0.1
             currentTime = Time()
         }
-        GetMysteryBox( usableMysteryBox ).isUsableWeapon = true
+
+        mysteryBox.isUsableWeapon = true
         Remote_CallFunction_NonReplay( player, "ServerCallback_SetWeaponMysteryBoxUsable", usableMysteryBox, true )
 
-        wait 3
+            wait 3
+
         if ( IsValid( weapon ) ) weapon.Destroy()
         if ( IsValid( script_mover ) ) script_mover.Destroy()
     }
@@ -339,7 +335,7 @@ global CustomZombieMysteryBox customZombieMysteryBox
         return mysteryBox
     }
 
-    entity function CreateWeaponInMysteryBox( int index, vector pos, vector ang )
+    entity function CreateWeaponInMysteryBox( int index, vector pos, vector ang, string targetName )
     {
         entity weaponWall = CreateEntity( "prop_dynamic" )
         weaponWall.SetModel( eWeaponZombieModel[ index ] )
@@ -349,6 +345,7 @@ global CustomZombieMysteryBox customZombieMysteryBox
         weaponWall.SetFadeDistance( 20000 )
         weaponWall.SetOrigin( pos )
         weaponWall.SetAngles( ang )
+        SetTargetName( weaponWall, targetName )
 
         DispatchSpawn( weaponWall )
         
@@ -371,4 +368,6 @@ global CustomZombieMysteryBox customZombieMysteryBox
     {
         waitthread PlayAnim( mysteryBox, "loot_bin_01_close" )
     }
-#endif
+#endif // SERVER
+
+#endif // SERVER || CLIENT
