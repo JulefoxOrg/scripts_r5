@@ -9,6 +9,7 @@
     global function ShZombieMysteryBox_Init
 
     global function GetMysteryBox
+    global function GetMysteryBoxFromEnt
 
 #if CLIENT
     const asset MYSTERY_BOX_DISPLAYRUI = $"ui/extended_use_hint.rpak"
@@ -18,27 +19,27 @@
     const asset MYSTERY_BOX_BEAM = $"P_ar_hot_zone_far"
 #endif // SERVER
 
-    const int    MYSTERY_BOX_COST                   = 950
     const float  MYSTERY_BOX_ON_USE_DURATION        = 0.0
-    const float  MYSTERY_BOX_WEAPON_ON_USE_DURATION = 0.0
     const float  MYSTERY_BOX_WEAPON_MOVE_TIME       = 3
-    const string USE                                = "Press %use% "
-    const string MYSTERY_BOX_USE                    = "to open Mystery Box\nCost: %i $"
+    const float  MYSTERY_BOX_WEAPON_ON_USE_DURATION = 0.0
+    const int    MYSTERY_BOX_COST                   = 950
     const string MYSTERY_BOX_SCRIPT_NAME            = "MysteryBoxScriptName"
-    const string MYSTERY_BOX_WEAPON_SCRIPT_NAME     = "MysteryBoxWeaponScriptName"
     const string MYSTERY_BOX_TAKE_WEAPON            = "to take %s"
-    const vector MYSTERY_BOX_WEAPON_ORIGIN_OFFSET   = < 0, 0, 20 >
+    const string MYSTERY_BOX_USE                    = "to open Mystery Box\nCost: %i $"
+    const string MYSTERY_BOX_WEAPON_SCRIPT_NAME     = "MysteryBoxWeaponScriptName"
+    const string USE                                = "Press %use% "
     const vector MYSTERY_BOX_WEAPON_ANGLES_OFFSET   = < 0, 90, 0 >
     const vector MYSTERY_BOX_WEAPON_MOVE_TO         = < 0, 0, 30 >
+    const vector MYSTERY_BOX_WEAPON_ORIGIN_OFFSET   = < 0, 0, 20 >
 
     global struct CustomZombieMysteryBox
     {
-        entity mysteryBoxFx
-        entity mysteryBoxWeapon
+        array < entity > mysteryBoxArray
         bool isUsable = false
         bool isUsableWeapon = false
+        entity mysteryBoxFx
+        entity mysteryBoxWeapon
         string targetName
-        array < entity > mysteryBoxArray
         table < entity, CustomZombieMysteryBox > mysteryBox
     }
     global CustomZombieMysteryBox customZombieMysteryBox
@@ -47,75 +48,81 @@
     void function ShZombieMysteryBox_Init()
     {
         #if SERVER
-            AddSpawnCallback( "prop_dynamic", UsableMysteryBox )
-            AddSpawnCallback( "prop_dynamic", UsableWeaponMysteryBox )
+            PrecacheParticleSystem( MYSTERY_BOX_BEAM )
+        #endif // SERVER
+
+        #if SERVER
+            AddSpawnCallback( "prop_dynamic", MysteryBoxInit )
+            AddSpawnCallback( "prop_dynamic", WeaponMysteryBoxInit )
         #endif // SERVER
 
         #if CLIENT
-            AddCreateCallback( "prop_dynamic", UsableMysteryBox )
-            AddCreateCallback( "prop_dynamic", UsableWeaponMysteryBox )
+            AddCreateCallback( "prop_dynamic", MysteryBoxInit )
+            AddCreateCallback( "prop_dynamic", WeaponMysteryBoxInit )
         #endif // CLIENT
     }
 
-    void function UsableMysteryBox( entity usableMysteryBox )
+    void function MysteryBoxInit( entity mysteryBox )
     {
-        if ( !IsValidUsableMysteryBoxEnt( usableMysteryBox ) )
+        if ( !IsValidMysteryBox( mysteryBox ) )
             return
 
-        AddMysteryBox( usableMysteryBox )
-        SetMysteryBoxUsable( usableMysteryBox )
+        AddMysteryBox( mysteryBox )
+        SetMysteryBoxUsable( mysteryBox )
 
         #if SERVER
-            SetMysteryBoxFx( usableMysteryBox )
+            SetMysteryBoxFx( mysteryBox )
         #endif // SERVER
     }
 
-    void function UsableWeaponMysteryBox( entity usableWeaponMysteryBox )
+    void function WeaponMysteryBoxInit( entity weaponMysteryBox )
     {
-        if ( !IsValidUsableWeaponMysteryBox( usableWeaponMysteryBox ) )
+        if ( !IsValidWeaponMysteryBox( weaponMysteryBox ) )
             return
 
-        SetWeaponMysteryBoxUsable( usableWeaponMysteryBox )
+        GetMysteryBoxFromEnt( weaponMysteryBox ).mysteryBoxWeapon = weaponMysteryBox
 
+        SetWeaponMysteryBoxUsable( weaponMysteryBox )
     }
 
-    CustomZombieMysteryBox function AddMysteryBox( entity usableMysteryBox )
+    CustomZombieMysteryBox function AddMysteryBox( entity mysteryBox )
     {
         CustomZombieMysteryBox newMysteryBox
 
-        customZombieMysteryBox.mysteryBox[ usableMysteryBox ] <- newMysteryBox
-        customZombieMysteryBox.mysteryBoxArray.append( usableMysteryBox )
+        customZombieMysteryBox.mysteryBox[ mysteryBox ] <- newMysteryBox
+        customZombieMysteryBox.mysteryBoxArray.append( mysteryBox )
 
-        customZombieMysteryBox.targetName = UniqueString( "MysteryBox" )
+        customZombieMysteryBox.targetName = UniqueMysteryBoxString( "MysteryBox" )
 
         #if SERVER
-            SetTargetName( usableMysteryBox, customZombieMysteryBox.targetName )
+            SetTargetName( mysteryBox, customZombieMysteryBox.targetName )
         #endif // SERVER
 
-        return customZombieMysteryBox.mysteryBox[ usableMysteryBox ]
+        return customZombieMysteryBox.mysteryBox[ mysteryBox ]
     }
 
-    CustomZombieMysteryBox function GetMysteryBox( entity usableMysteryBox )
+    CustomZombieMysteryBox function GetMysteryBox( entity mysteryBox )
     {
-        return customZombieMysteryBox.mysteryBox[ usableMysteryBox ]
+        return customZombieMysteryBox.mysteryBox[ mysteryBox ]
     }
 
-    entity function GetMysteryBoxEntFromTargetName( string targetName )
+    CustomZombieMysteryBox function GetMysteryBoxFromEnt( entity mysteryBoxEnt )
     {
-        entity mysteryBox
+        string targetName = mysteryBoxEnt.GetTargetName()
+        entity MysteryBox
 
-        foreach ( mysteryBoxs in GetAllMysteryBox() )
-            if ( GetMysteryBox( mysteryBoxs ).targetName == targetName )
-                mysteryBox = mysteryBoxs
+        foreach ( mysteryBox in GetAllMysteryBox() )
+            if ( GetMysteryBox( mysteryBox ).targetName == targetName )
+                MysteryBox = mysteryBox
 
-    return mysteryBox }
+    return customZombieMysteryBox.mysteryBox[ MysteryBox ] }
 
     array< entity > function GetAllMysteryBox()
     {
         return customZombieMysteryBox.mysteryBoxArray
     }
 
-    bool function IsValidUsableMysteryBoxEnt( entity ent )
+    bool function IsValidMysteryBox( entity ent )
     {
         if ( ent.GetScriptName() == MYSTERY_BOX_SCRIPT_NAME )
             return true
@@ -123,7 +130,7 @@
         return false
     }
 
-    bool function IsValidUsableWeaponMysteryBox( entity ent )
+    bool function IsValidWeaponMysteryBox( entity ent )
     {
         if ( ent.GetScriptName() == MYSTERY_BOX_WEAPON_SCRIPT_NAME )
             return true
@@ -131,51 +138,57 @@
         return false
     }
 
-    bool function UsableMysteryBox_CanUse( entity player, entity usableMysteryBox )
+    bool function MysteryBox_CanUse( entity player, entity mysteryBox )
     {
-        if ( !SURVIVAL_PlayerCanUse_AnimatedInteraction( player, usableMysteryBox ) )
+        if ( !SURVIVAL_PlayerCanUse_AnimatedInteraction( player, mysteryBox ) )
             return false
 
         return true
     }
 
-    void function SetMysteryBoxUsable( entity usableMysteryBox )
+    int uniqueMysteryBoxIdx = 0
+    string function UniqueMysteryBoxString( string str = "" )
+    {
+    	return str + "_idx" + uniqueMysteryBoxIdx++
+    }
+
+    void function SetMysteryBoxUsable( entity mysteryBox )
     {
         #if SERVER
-            usableMysteryBox.SetUsable()
-            usableMysteryBox.SetUsableByGroup( "pilot" )
-            usableMysteryBox.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
-            usableMysteryBox.SetUsablePriority( USABLE_PRIORITY_MEDIUM )
+            mysteryBox.SetUsable()
+            mysteryBox.SetUsableByGroup( "pilot" )
+            mysteryBox.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
+            mysteryBox.SetUsablePriority( USABLE_PRIORITY_MEDIUM )
         #endif // SERVER
 
-        GetMysteryBox( usableMysteryBox ).isUsable = true
+        GetMysteryBox( mysteryBox ).isUsable = true
 
-        SetCallback_CanUseEntityCallback( usableMysteryBox, UsableMysteryBox_CanUse )
-        AddCallback_OnUseEntity( usableMysteryBox, OnUseProcessingMysteryBox )
+        SetCallback_CanUseEntityCallback( mysteryBox, MysteryBox_CanUse )
+        AddCallback_OnUseEntity( mysteryBox, OnUseProcessingMysteryBox )
 
         #if CLIENT
-            AddEntityCallback_GetUseEntOverrideText( usableMysteryBox, MysteryBox_TextOverride )
+            AddEntityCallback_GetUseEntOverrideText( mysteryBox, MysteryBox_TextOverride )
         #endif // CLIENT
     }
 
-    void function SetWeaponMysteryBoxUsable( entity usableWeaponMysteryBox )
+    void function SetWeaponMysteryBoxUsable( entity weaponMysteryBox )
     {
         #if SERVER
-            usableWeaponMysteryBox.SetUsable()
-            usableWeaponMysteryBox.SetUsableByGroup( "pilot" )
-            usableWeaponMysteryBox.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
-            usableWeaponMysteryBox.SetUsablePriority( USABLE_PRIORITY_MEDIUM )
+            weaponMysteryBox.SetUsable()
+            weaponMysteryBox.SetUsableByGroup( "pilot" )
+            weaponMysteryBox.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
+            weaponMysteryBox.SetUsablePriority( USABLE_PRIORITY_MEDIUM )
         #endif // SERVER
 
-        SetCallback_CanUseEntityCallback( usableWeaponMysteryBox, UsableMysteryBox_CanUse )
-        AddCallback_OnUseEntity( usableWeaponMysteryBox, OnUseProcessingWeaponMysteryBox )
+        SetCallback_CanUseEntityCallback( weaponMysteryBox, MysteryBox_CanUse )
+        AddCallback_OnUseEntity( weaponMysteryBox, OnUseProcessingWeaponMysteryBox )
 
         #if CLIENT
-            AddEntityCallback_GetUseEntOverrideText( usableWeaponMysteryBox, WeaponMysteryBox_TextOverride )
+            AddEntityCallback_GetUseEntOverrideText( weaponMysteryBox, WeaponMysteryBox_TextOverride )
         #endif // CLIENT
     }
 
-    void function OnUseProcessingMysteryBox( entity usableMysteryBox, entity playerUser, int useInputFlags )
+    void function OnUseProcessingMysteryBox( entity mysteryBox, entity playerUser, int useInputFlags )
     {
         if ( !( useInputFlags & USE_INPUT_LONG ) )
             return
@@ -191,10 +204,10 @@
             settings.displayRuiFunc     = MysteryBox_DisplayRui
         #endif // CLIENT
 
-        thread ExtendedUse( usableMysteryBox, playerUser, settings )
+        thread ExtendedUse( mysteryBox, playerUser, settings )
     }
 
-    void function OnUseProcessingWeaponMysteryBox( entity usableWeaponMysteryBox, entity playerUser, int useInputFlags )
+    void function OnUseProcessingWeaponMysteryBox( entity weaponMysteryBox, entity playerUser, int useInputFlags )
     {
         if ( !( useInputFlags & USE_INPUT_LONG ) )
             return
@@ -210,42 +223,42 @@
             settings.displayRuiFunc     = MysteryBox_DisplayRui
         #endif // CLIENT
 
-        thread ExtendedUse( usableWeaponMysteryBox, playerUser, settings )
+        thread ExtendedUse( weaponMysteryBox, playerUser, settings )
     }
 
-    void function MysteryBoxUseSuccess( entity usableMysteryBox, entity player, ExtendedUseSettings settings )
+    void function MysteryBoxUseSuccess( entity mysteryBox, entity player, ExtendedUseSettings settings )
     {
-        if ( !GetMysteryBox( usableMysteryBox ).isUsable )
+        CustomZombieMysteryBox mysteryBoxStruct = GetMysteryBox( mysteryBox )
+
+        if ( !mysteryBoxStruct.isUsable )
             return
         
         if ( !PlayerHasEnoughScore( player, MYSTERY_BOX_COST ) )
             return
 
-        GetMysteryBox( usableMysteryBox ).isUsable = false
-        GetMysteryBox( usableMysteryBox ).isUsableWeapon = false
+        mysteryBoxStruct.isUsable = false
+        mysteryBoxStruct.isUsableWeapon = false
+
+        RemoveScoreToPlayer( player, MYSTERY_BOX_COST )
 
         #if SERVER
-            EmitSoundOnEntity( usableMysteryBox, SOUND_LOOT_BIN_OPEN )
+            EmitSoundOnEntity( mysteryBox, SOUND_LOOT_BIN_OPEN )
 
-            RemoveScoreToPlayer( player, MYSTERY_BOX_COST )
+            waitthread MysteryBox_PlayOpenSequence( mysteryBox, player )
+            waitthread MysteryBox_Thread( mysteryBox, player )
+            waitthread MysteryBox_PlayCloseSequence( mysteryBox )
 
-            waitthread MysteryBox_PlayOpenSequence( usableMysteryBox, player )
-            waitthread MysteryBox_Thread( usableMysteryBox, player )
-            waitthread MysteryBox_PlayCloseSequence( usableMysteryBox )
-            GetMysteryBox( usableMysteryBox ).isUsable = true
-            GetMysteryBox( usableMysteryBox ).isUsableWeapon = true
-            Remote_CallFunction_NonReplay( player, "ServerCallback_SetMysteryBoxUsable", usableMysteryBox, true )
-            Remote_CallFunction_NonReplay( player, "ServerCallback_SetWeaponMysteryBoxUsable", usableMysteryBox, true )
+            MysteryBoxSetUsable( player, mysteryBox, true )
         #endif
     }
 
-    void function WeaponMysteryBoxUseSuccess( entity usableWeaponMysteryBox, entity player, ExtendedUseSettings settings )
+    void function WeaponMysteryBoxUseSuccess( entity weaponMysteryBox, entity player, ExtendedUseSettings settings )
     {
-        if ( !GetMysteryBox( GetMysteryBoxEntFromTargetName( usableWeaponMysteryBox.GetTargetName() ) ).isUsableWeapon )
+        if ( !GetMysteryBoxFromEnt( weaponMysteryBox ).isUsableWeapon )
             return
         
         #if SERVER
-            ServerWeaponWallUseSuccess( usableWeaponMysteryBox, player )
+            ServerWeaponWallUseSuccess( weaponMysteryBox, player )
         #endif // SERVER
     }
 
@@ -259,20 +272,20 @@
         RuiSetGameTime( rui, "endTime", Time() + settings.duration )
     }
 
-    string function MysteryBox_TextOverride( entity usableMysteryBox )
+    string function MysteryBox_TextOverride( entity mysteryBox )
     {
-        if ( !GetMysteryBox( usableMysteryBox ).isUsable )
+        if ( !GetMysteryBox( mysteryBox ).isUsable )
             return ""
         
         return USE + format( MYSTERY_BOX_USE, MYSTERY_BOX_COST )
     }
 
-    string function WeaponMysteryBox_TextOverride( entity usableWeaponMysteryBox )
+    string function WeaponMysteryBox_TextOverride( entity weaponMysteryBox )
     {
-        if ( !GetMysteryBox( GetMysteryBoxEntFromTargetName( usableWeaponMysteryBox.GetTargetName() ) ).isUsableWeapon )
+        if ( !GetMysteryBoxFromEnt( weaponMysteryBox ).isUsableWeapon )
             return ""
         
-        int weaponIdx = GetWeaponIdx( usableWeaponMysteryBox )
+        int weaponIdx = GetWeaponIdx( weaponMysteryBox )
         string weaponName = eWeaponZombieName[ weaponIdx ][ 1 ]
 
         return USE + format( MYSTERY_BOX_TAKE_WEAPON, weaponName )
@@ -281,23 +294,15 @@
 
 
 #if SERVER
-    void function SetMysteryBoxFx( entity usableMysteryBox )
+    void function MysteryBox_Thread( entity mysteryBox, entity player )
     {
-        PrecacheParticleSystem( MYSTERY_BOX_BEAM )
-        GetMysteryBox( usableMysteryBox ).mysteryBoxFx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( MYSTERY_BOX_BEAM ), usableMysteryBox.GetOrigin(), < 90, 0, 0 > )
-    }
+        vector mysteryBoxOrigin = mysteryBox.GetOrigin()
+        vector mysteryBoxAngles = mysteryBox.GetAngles()
 
-    void function MysteryBox_Thread( entity usableMysteryBox, entity player )
-    {
-        vector mysteryBoxOrigin = usableMysteryBox.GetOrigin()
-        vector mysteryBoxAngles = usableMysteryBox.GetAngles()
+        CustomZombieMysteryBox mysteryBoxStruct = GetMysteryBox( mysteryBox )
 
-        CustomZombieMysteryBox mysteryBox = GetMysteryBox( usableMysteryBox )
-
-        entity weapon = mysteryBox.mysteryBoxWeapon
-        weapon = CreateWeaponInMysteryBox( 0, mysteryBoxOrigin + MYSTERY_BOX_WEAPON_ORIGIN_OFFSET, mysteryBoxAngles + MYSTERY_BOX_WEAPON_ANGLES_OFFSET, mysteryBox.targetName )
-
-        mysteryBox.isUsableWeapon = false
+        entity weapon = mysteryBoxStruct.mysteryBoxWeapon
+        weapon = CreateWeaponInMysteryBox( 0, mysteryBoxOrigin + MYSTERY_BOX_WEAPON_ORIGIN_OFFSET, mysteryBoxAngles + MYSTERY_BOX_WEAPON_ANGLES_OFFSET, mysteryBoxStruct.targetName )
 
         entity script_mover = CreateScriptMover( mysteryBoxOrigin + MYSTERY_BOX_WEAPON_ORIGIN_OFFSET, mysteryBoxAngles + MYSTERY_BOX_WEAPON_ANGLES_OFFSET )
 
@@ -316,13 +321,29 @@
             currentTime = Time()
         }
 
-        mysteryBox.isUsableWeapon = true
-        Remote_CallFunction_NonReplay( player, "ServerCallback_SetWeaponMysteryBoxUsable", usableMysteryBox, true )
+        MysteryBoxWeaponSetUsable( player, weapon, true )
 
             wait 3
 
         if ( IsValid( weapon ) ) weapon.Destroy()
         if ( IsValid( script_mover ) ) script_mover.Destroy()
+    }
+
+    void function SetMysteryBoxFx( entity mysteryBox )
+    {
+        GetMysteryBox( mysteryBox ).mysteryBoxFx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( MYSTERY_BOX_BEAM ), mysteryBox.GetOrigin(), < 90, 0, 0 > )
+    }
+
+    void function MysteryBoxSetUsable( entity player, entity mysteryBox, bool isUsable )
+    {
+        GetMysteryBox( mysteryBox ).isUsable = isUsable
+        Remote_CallFunction_NonReplay( player, "ServerCallback_SetMysteryBoxUsable", mysteryBox, isUsable )
+    }
+
+    void function MysteryBoxWeaponSetUsable( entity player, entity weaponMysteryBox, bool isUsable )
+    {
+        GetMysteryBoxFromEnt( weaponMysteryBox ).isUsableWeapon = isUsable
+        Remote_CallFunction_NonReplay( player, "ServerCallback_SetWeaponMysteryBoxUsable", weaponMysteryBox, isUsable )
     }
 
     entity function CreateMysteryBox( vector origin, vector angles )

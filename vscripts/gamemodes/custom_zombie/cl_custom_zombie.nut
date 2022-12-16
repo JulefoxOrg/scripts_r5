@@ -7,7 +7,6 @@ global function ServerCallback_UpdateClientScoreToPlayer
 global function ServerCallback_RUIInit
 global function ServerCallback_SetMysteryBoxUsable
 global function ServerCallback_SetWeaponMysteryBoxUsable
-global function ServerCallback_AddWeaponMysteryBoxUsableToClient
 
 const string SCORE = "%i $"
 
@@ -59,17 +58,12 @@ void function ServerCallback_RUIUpdateCurrency()
     RuiSetString( player.playerScoreUI, "messageText", playerScore )
 }
 
-void function ServerCallback_SetMysteryBoxUsable( entity usableMysteryBox, bool isUsable )
+void function ServerCallback_SetMysteryBoxUsable( entity mysteryBox, bool isUsable )
 {
-    GetMysteryBox( usableMysteryBox ).isUsable = isUsable
+    GetMysteryBox( mysteryBox ).isUsable = isUsable
 }
 
-void function ServerCallback_SetWeaponMysteryBoxUsable( entity usableMysteryBox, bool isUsableWeapon )
+void function ServerCallback_SetWeaponMysteryBoxUsable( entity weaponMysteryBox, bool isUsable )
 {
-    GetMysteryBox( usableMysteryBox ).isUsableWeapon = isUsableWeapon
-}
-
-void function ServerCallback_AddWeaponMysteryBoxUsableToClient( entity usableMysteryBox, entity usableWeaponMysteryBox )
-{
-    GetMysteryBox( usableMysteryBox ).mysteryBoxWeapon = usableWeaponMysteryBox
+    GetMysteryBoxFromEnt( weaponMysteryBox ).isUsableWeapon = isUsable
 }
