@@ -35,10 +35,13 @@
     global struct CustomZombieMysteryBox
     {
         array < entity > mysteryBoxArray
+        bool execThread = true
         bool isUsable = false
         bool isUsableWeapon = false
+        entity mysteryBoxEnt
         entity mysteryBoxFx
         entity mysteryBoxWeapon
+        entity mysteryBoxWeaponScriptMover
         string targetName
         table < entity, CustomZombieMysteryBox > mysteryBox
     }
@@ -92,10 +95,11 @@
         customZombieMysteryBox.mysteryBox[ mysteryBox ] <- newMysteryBox
         customZombieMysteryBox.mysteryBoxArray.append( mysteryBox )
 
-        customZombieMysteryBox.targetName = UniqueMysteryBoxString( "MysteryBox" )
+        newMysteryBox.mysteryBoxEnt = mysteryBox
+        newMysteryBox.targetName = UniqueMysteryBoxString( "MysteryBox" )
 
         #if SERVER
-            SetTargetName( mysteryBox, customZombieMysteryBox.targetName )
+            SetTargetName( mysteryBox, newMysteryBox.targetName )
         #endif // SERVER
 
         return customZombieMysteryBox.mysteryBox[ mysteryBox ]
@@ -116,6 +120,17 @@
                 MysteryBox = mysteryBox
 
     return customZombieMysteryBox.mysteryBox[ MysteryBox ] }
+
+    entity function GetEntMysteryBoxFromEnt( entity mysteryBoxEnt )
+    {
+        string targetName = mysteryBoxEnt.GetTargetName()
+        entity MysteryBox
+
+        foreach ( mysteryBox in GetAllMysteryBox() )
+            if ( GetMysteryBox( mysteryBox ).targetName == targetName )
+                MysteryBox = mysteryBox
+
+    return MysteryBox }
 
     array< entity > function GetAllMysteryBox()
     {
@@ -246,19 +261,22 @@
 
             waitthread MysteryBox_PlayOpenSequence( mysteryBox, player )
             waitthread MysteryBox_Thread( mysteryBox, player )
-            waitthread MysteryBox_PlayCloseSequence( mysteryBox )
-
-            MysteryBoxSetUsable( player, mysteryBox, true )
+            if ( mysteryBoxStruct.execThread ) thread DestroyWeaponByDeadline_Thread( player, mysteryBox )
         #endif
     }
 
     void function WeaponMysteryBoxUseSuccess( entity weaponMysteryBox, entity player, ExtendedUseSettings settings )
     {
-        if ( !GetMysteryBoxFromEnt( weaponMysteryBox ).isUsableWeapon )
+        CustomZombieMysteryBox mysteryBoxStruct = GetMysteryBoxFromEnt( weaponMysteryBox )
+
+        if ( !mysteryBoxStruct.isUsableWeapon )
             return
         
         #if SERVER
             ServerWeaponWallUseSuccess( weaponMysteryBox, player )
+
+            mysteryBoxStruct.execThread = false
+            thread DestroyWeaponByDeadline_Thread( player, mysteryBoxStruct.mysteryBoxEnt )
         #endif // SERVER
     }
 
@@ -302,9 +320,10 @@
         CustomZombieMysteryBox mysteryBoxStruct = GetMysteryBox( mysteryBox )
 
         entity weapon = mysteryBoxStruct.mysteryBoxWeapon
-        weapon = CreateWeaponInMysteryBox( 0, mysteryBoxOrigin + MYSTERY_BOX_WEAPON_ORIGIN_OFFSET, mysteryBoxAngles + MYSTERY_BOX_WEAPON_ANGLES_OFFSET, mysteryBoxStruct.targetName )
+        entity script_mover = mysteryBoxStruct.mysteryBoxWeaponScriptMover
 
-        entity script_mover = CreateScriptMover( mysteryBoxOrigin + MYSTERY_BOX_WEAPON_ORIGIN_OFFSET, mysteryBoxAngles + MYSTERY_BOX_WEAPON_ANGLES_OFFSET )
+        weapon = CreateWeaponInMysteryBox( 0, mysteryBoxOrigin + MYSTERY_BOX_WEAPON_ORIGIN_OFFSET, mysteryBoxAngles + MYSTERY_BOX_WEAPON_ANGLES_OFFSET, mysteryBoxStruct.targetName )
+        script_mover = CreateScriptMover( mysteryBoxOrigin + MYSTERY_BOX_WEAPON_ORIGIN_OFFSET, mysteryBoxAngles + MYSTERY_BOX_WEAPON_ANGLES_OFFSET )
 
         weapon.SetParent( script_mover )
 
@@ -323,10 +342,26 @@
 
         MysteryBoxWeaponSetUsable( player, weapon, true )
 
-            wait 3
+        wait 3
+    }
+
+    void function DestroyWeaponByDeadline_Thread( entity player, entity mysteryBox )
+    {
+        CustomZombieMysteryBox mysteryBoxStruct = GetMysteryBox( mysteryBox )
+
+        entity weapon = mysteryBoxStruct.mysteryBoxWeapon
+        entity script_mover = mysteryBoxStruct.mysteryBoxWeaponScriptMover
 
         if ( IsValid( weapon ) ) weapon.Destroy()
         if ( IsValid( script_mover ) ) script_mover.Destroy()
+
+            wait 0.2
+
+        waitthread MysteryBox_PlayCloseSequence( mysteryBox )
+
+            wait 0.1
+
+        MysteryBoxSetUsable( player, mysteryBox, true )
     }
 
     void function SetMysteryBoxFx( entity mysteryBox )
