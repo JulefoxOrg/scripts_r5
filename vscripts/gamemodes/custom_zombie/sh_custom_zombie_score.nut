@@ -10,11 +10,11 @@ global function RemoveScoreToPlayer
 
 void function ShZombieScore_Init()
 {
-    #if SERVER  
+    #if SERVER && NIGHTMARE_DEV
         AddClientCommandCallback( "$", ClientCommand_GetPlayerScore )
         AddClientCommandCallback( "sa", ClientCommand_AddScoreToPlayer )
         AddClientCommandCallback( "sr", ClientCommand_RemoveScoreToPlayer )
-    #endif // SERVER
+    #endif // SERVER && NIGHTMARE_DEV
 }
 
 void function AddScoreToPlayer( entity player, int score )

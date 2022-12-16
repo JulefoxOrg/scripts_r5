@@ -7,6 +7,7 @@ global function ServerCallback_UpdateClientScoreToPlayer
 global function ServerCallback_RUIInit
 global function ServerCallback_SetMysteryBoxUsable
 global function ServerCallback_SetWeaponMysteryBoxUsable
+global function ServerCallback_MysteryBoxChangeLocation_DoAnnouncement
 
 const string SCORE = "%i $"
 
@@ -60,10 +61,20 @@ void function ServerCallback_RUIUpdateCurrency()
 
 void function ServerCallback_SetMysteryBoxUsable( entity mysteryBox, bool isUsable )
 {
-    GetMysteryBox( mysteryBox ).isUsable = isUsable
+    GetMysteryBox( mysteryBox ).mysteryBoxCanUse = isUsable
 }
 
 void function ServerCallback_SetWeaponMysteryBoxUsable( entity weaponMysteryBox, bool isUsable )
 {
-    GetMysteryBoxFromEnt( weaponMysteryBox ).isUsableWeapon = isUsable
+    GetMysteryBoxFromEnt( weaponMysteryBox ).weaponCanUse = isUsable
+}
+
+void function ServerCallback_MysteryBoxChangeLocation_DoAnnouncement()
+{
+    foreach( player in GetPlayerArray() )
+    {
+        AnnouncementData announcement = Announcement_Create( "" )
+	    Announcement_SetSoundAlias( announcement, "survival_circle_close_alarm_01" )
+        AnnouncementFromClass( player, announcement )
+    }
 }
