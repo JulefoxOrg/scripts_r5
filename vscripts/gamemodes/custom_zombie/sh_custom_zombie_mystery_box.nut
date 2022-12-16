@@ -35,7 +35,7 @@
     global struct CustomZombieMysteryBox
     {
         array < entity > mysteryBoxArray
-        bool execThread = true
+        bool execThread
         bool isUsable = false
         bool isUsableWeapon = false
         entity mysteryBoxEnt
@@ -253,6 +253,7 @@
 
         mysteryBoxStruct.isUsable = false
         mysteryBoxStruct.isUsableWeapon = false
+        mysteryBoxStruct.execThread = true
 
         RemoveScoreToPlayer( player, MYSTERY_BOX_COST )
 
@@ -330,14 +331,15 @@
         float currentTime = Time()
         float startTime = currentTime
         float endTime = startTime + MYSTERY_BOX_WEAPON_MOVE_TIME
+        float waitVar = 0.01
 
         script_mover.NonPhysicsMoveTo( weapon.GetOrigin() + MYSTERY_BOX_WEAPON_MOVE_TO, MYSTERY_BOX_WEAPON_MOVE_TIME, 0, MYSTERY_BOX_WEAPON_MOVE_TIME )
 
         while ( endTime > currentTime )
         {
             weapon.SetModel( eWeaponZombieModel[ RandomIntRange( 0, eWeaponZombieIdx.len() - 1 ) ] )
-            wait 0.1
             currentTime = Time()
+            wait waitVar
         }
 
         MysteryBoxWeaponSetUsable( player, weapon, true )
