@@ -98,7 +98,7 @@
     }
 
 
-    // Check by the name of the script if it is a mystery box.
+    // Check by script name if it is a mystery box.
     bool function IsValidMysteryBox( entity ent )
     {
         if ( ent.GetScriptName() == MYSTERY_BOX_SCRIPT_NAME )
@@ -239,15 +239,14 @@
         }
     #endif // CLIENT
 
+    //  _______ _    _ _____  ______          _____  
+    // |__   __| |  | |  __ \|  ____|   /\   |  __ \ 
+    //    | |  | |__| | |__) | |__     /  \  | |  | |
+    //    | |  |  __  |  _  /|  __|   / /\ \ | |  | |
+    //    | |  | |  | | | \ \| |____ / ____ \| |__| |
+    //    |_|  |_|  |_|_|  \_\______/_/    \_\_____/ 
 
-    #if SERVER
-        //  _______ _    _ _____  ______          _____  
-        // |__   __| |  | |  __ \|  ____|   /\   |  __ \ 
-        //    | |  | |__| | |__) | |__     /  \  | |  | |
-        //    | |  |  __  |  _  /|  __|   / /\ \ | |  | |
-        //    | |  | |  | | | \ \| |____ / ____ \| |__| |
-        //    |_|  |_|  |_|_|  \_\______/_/    \_\_____/ 
-                             
+    #if SERVER            
         // Thread init
         void function MysteryBox_Init( entity mysteryBox, entity player )
         {
@@ -358,7 +357,7 @@
 
                 wait 0.1
 
-            if ( IsValid( toDissolve ) ) toDissolve.Dissolve( ENTITY_DISSOLVE_CORE, <0,0,0>, 1000 )
+            if ( IsValid( toDissolve ) ) toDissolve.Dissolve( ENTITY_DISSOLVE_CORE, < 0, 0, 0 >, 1000 )
         }
 
 

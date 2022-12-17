@@ -993,4 +993,5 @@ Scripts:
     gamemodes/custom_zombie/sh_custom_zombie_score.nut
     gamemodes/custom_zombie/sh_custom_zombie_mystery_box.nut
     gamemodes/custom_zombie/sh_custom_zombie_mystery_box_weapon.nut
+    gamemodes/custom_zombie/sh_perks.nut
 ]

@@ -1,35 +1,40 @@
 
 #if SERVER || CLIENT
+
     untyped
-#endif // SERVER || CLIENT
 
-#if SERVER // Global
-    global function CreateWeaponWall
-    global function GiveWeaponToPlayer
-    global function ServerWeaponWallUseSuccess
-#endif // SERVER
+    // Global functions
+        global function ShZombieWeaponWall_Init
 
-#if SERVER || CLIENT // Global
-    global function ShZombieWeaponWall_Init
+        global function GetWeaponIdx
 
-    global function GetWeaponIdx
-#endif // SERVER || CLIENT
+    #if SERVER
+        global function CreateWeaponWall
+        global function GiveWeaponToPlayer
+        global function ServerWeaponWallUseSuccess
+    #endif // SERVER
 
-#if CLIENT
-    const asset WEAPON_WALL_DISPLAYRUI = $"ui/extended_use_hint.rpak"
-#endif // CLIENT
+    #if CLIENT
+    #endif // CLIENT
+    
+    // Consts
+        const float  WEAPON_WALL_ON_USE_DURATION    = 0.0
+        const string USE                            = "Press %use% "
+        const string WEAPON_WALL_BUY_AMMO           = "to buy ammo for %s\nCost: %i $"
+        const string WEAPON_WALL_BUY_WEAPON         = "to buy %s\nCost: %i $"
+        const string WEAPON_WALL_NO_SCORE_AMMO      = "Not enough score to buy %s ammo\nCost: %i $"
+        const string WEAPON_WALL_NO_SCORE_WEAPON    = "Not enough score to buy %s\nCost: %i $"
+        const string WEAPON_WALL_SCRIPT_NAME        = "WeaponWallScriptName"
 
-#if SERVER || CLIENT // Const
-    const float  WEAPON_WALL_ON_USE_DURATION = 0.0
-    const string USE                         = "Press %use% "
-    const string WEAPON_WALL_BUY_WEAPON      = "to buy %s\nCost: %i $"
-    const string WEAPON_WALL_BUY_AMMO        = "to buy ammo for %s\nCost: %i $"
-    const string WEAPON_WALL_NO_SCORE_WEAPON = "Not enough score to buy %s\nCost: %i $"
-    const string WEAPON_WALL_NO_SCORE_AMMO   = "Not enough score to buy %s ammo\nCost: %i $"
-    const string WEAPON_WALL_SCRIPT_NAME     = "WeaponWallScriptName"
-#endif // SERVER || CLIENT
+    #if SERVER
+    #endif // SERVER
 
-#if SERVER || CLIENT
+    #if CLIENT
+        const asset WEAPON_WALL_DISPLAYRUI = $"ui/extended_use_hint.rpak"
+    #endif // CLIENT
+
+
+    // Global weapon index
     global enum eWeaponZombieIdx
     {
         // Assault Rifles
@@ -76,6 +81,9 @@
         COUNT
     }
 
+
+    // Global weapon asset
+    // Get them by index
     global table< int, asset > eWeaponZombieModel =
     {
         [ eWeaponZombieIdx.FLATLINE ] = $"mdl/weapons/vinson/w_vinson.rmdl",
@@ -107,6 +115,9 @@
         [ eWeaponZombieIdx.THERMITE ] = $"mdl/weapons/grenades/w_thermite_grenade.rmdl"
     }
 
+
+    // Global weapon name
+    // Get them by index
     global table< int, array< string > > eWeaponZombieName =
     {
         [ eWeaponZombieIdx.FLATLINE ] = [ "mp_weapon_vinson", "Flatline" ],
@@ -138,6 +149,9 @@
         [ eWeaponZombieIdx.THERMITE ] = [ "mp_weapon_thermite_grenade", "Thermite Grenade" ]
     }
 
+
+    // Global weapon price
+    // Get them by index
     global table< int, array< int > > eWeaponZombiePrice =
     {
         [ eWeaponZombieIdx.FLATLINE ] = [ 1250, 500 ],
@@ -168,10 +182,9 @@
         [ eWeaponZombieIdx.FRAG ] = [ 200, 0 ],
         [ eWeaponZombieIdx.THERMITE ] = [ 200, 0 ]
     }
-#endif // SERVER || CLIENT
 
 
-#if SERVER || CLIENT
+    // Init
     void function ShZombieWeaponWall_Init()
     {
         #if SERVER
@@ -182,18 +195,20 @@
             AddCreateCallback( "prop_dynamic", UsableWeaponWall )
         #endif // CLIENT
     }
-#endif  // SERVER || CLIENT
 
-#if SERVER || CLIENT
+
+    // SERVER && CLIENT Callback
     void function UsableWeaponWall( entity usableWeaponWall )
     {
-        if ( !IsValidusableWeaponWallEnt( usableWeaponWall ) )
+        if ( !IsValidUsableWeaponWallEnt( usableWeaponWall ) )
             return
 
         SetWeaponWallUsable( usableWeaponWall )
     }
 
-    bool function IsValidusableWeaponWallEnt( entity ent )
+
+    // Check by script name if it is a mystery box.
+    bool function IsValidUsableWeaponWallEnt( entity ent )
     {
         if ( ent.GetScriptName() == WEAPON_WALL_SCRIPT_NAME )
             return true
@@ -201,14 +216,8 @@
         return false
     }
 
-    bool function UsableWeaponWall_CanUse( entity player, entity usableWeaponWall )
-    {
-        if ( !SURVIVAL_PlayerCanUse_AnimatedInteraction( player, usableWeaponWall ) )
-            return false
 
-        return true
-    }
-
+    // Set weapon wall usable
     void function SetWeaponWallUsable( entity usableWeaponWall )
     {
         #if SERVER
@@ -226,6 +235,18 @@
 	    #endif // CLIENT
     }
 
+
+    // If is usable
+    bool function UsableWeaponWall_CanUse( entity player, entity usableWeaponWall )
+    {
+        if ( !SURVIVAL_PlayerCanUse_AnimatedInteraction( player, usableWeaponWall ) )
+            return false
+
+        return true
+    }
+
+
+    // Callback if the weapon wall is used
     void function OnUseProcessingWeaponWall( entity usableWeaponWall, entity playerUser, int useInputFlags )
     {	
         if ( !( useInputFlags & USE_INPUT_LONG ) )
@@ -245,19 +266,7 @@
         thread ExtendedUse( usableWeaponWall, playerUser, settings )
     }
 
-    int function GetWeaponIdx( entity usableWeaponWall )
-    {
-        int weaponIdx ; asset modelName = usableWeaponWall.GetModelName()
-
-        for ( int i = 0 ; i < eWeaponZombieModel.len() ; i++  )
-        {
-            if ( modelName == eWeaponZombieModel[ i ] )
-                weaponIdx = i
-        }
-
-        return weaponIdx
-    }
-
+    // If the callback is a success
     void function WeaponWallUseSuccess( entity usableWeaponWall, entity player, ExtendedUseSettings settings )
     {
         int weaponIdx = GetWeaponIdx( usableWeaponWall )
@@ -293,131 +302,169 @@
             //Survival_PickupItem( weapon, player )
         }
     }
-#endif // SERVER || CLIENT
 
 
-#if CLIENT
-    void function WeaponWall_DisplayRui( entity ent, entity player, var rui, ExtendedUseSettings settings )
-    {
-        RuiSetString( rui, "holdButtonHint", settings.holdHint )
-        RuiSetString( rui, "hintText", settings.hint )
-        RuiSetGameTime( rui, "startTime", Time() )
-        RuiSetGameTime( rui, "endTime", Time() + settings.duration )
-    }
-
-    string function WeaponWall_TextOverride( entity usableWeaponWall )
-    {
-        int weaponIdx = GetWeaponIdx( usableWeaponWall )
-        int weaponPrice = eWeaponZombiePrice[ weaponIdx ][ 0 ]
-        int weaponPriceAmmo = eWeaponZombiePrice[ weaponIdx ][ 1 ]
-        string weaponNameScript = eWeaponZombieName[ weaponIdx ][ 0 ]
-        string weaponName = eWeaponZombieName[ weaponIdx ][ 1 ]
-
-        if ( PlayerHasWeapon( GetLocalViewPlayer(), weaponNameScript ) )
+    #if CLIENT
+        // Text override
+        string function WeaponWall_TextOverride( entity usableWeaponWall )
         {
-            //if ( !PlayerHasEnoughScore( GetLocalViewPlayer(), weaponPriceAmmo ) )
-            //    return format( WEAPON_WALL_NO_SCORE_AMMO, weaponName, weaponPriceAmmo )
+            int weaponIdx = GetWeaponIdx( usableWeaponWall )
+            int weaponPrice = eWeaponZombiePrice[ weaponIdx ][ 0 ]
+            int weaponPriceAmmo = eWeaponZombiePrice[ weaponIdx ][ 1 ]
+            string weaponNameScript = eWeaponZombieName[ weaponIdx ][ 0 ]
+            string weaponName = eWeaponZombieName[ weaponIdx ][ 1 ]
 
-            return USE + format( WEAPON_WALL_BUY_AMMO, weaponName, weaponPriceAmmo )
-        }
+            if ( PlayerHasWeapon( GetLocalViewPlayer(), weaponNameScript ) )
+            {
+                //if ( !PlayerHasEnoughScore( GetLocalViewPlayer(), weaponPriceAmmo ) )
+                //    return format( WEAPON_WALL_NO_SCORE_AMMO, weaponName, weaponPriceAmmo )
 
-        //if ( !PlayerHasEnoughScore( GetLocalViewPlayer(), weaponPrice ) )
-        //    return format( WEAPON_WALL_NO_SCORE_WEAPON, weaponName, weaponPrice )
-
-        return USE + format( WEAPON_WALL_BUY_WEAPON, weaponName, weaponPrice )
-    }
-#endif // CLIENT
-
-
-#if SERVER
-    void function ServerWeaponWallUseSuccess( entity usableWeaponWall, entity player )
-    {
-        entity weapon ; int weaponIdx = GetWeaponIdx( usableWeaponWall ) ; string weaponName = eWeaponZombieName[ weaponIdx ][ 0 ]
-
-        if ( PlayerHasWeapon( player, weaponName ) )
-        {
-            
-        }
-        else
-        {
-            entity primary = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
-            entity secondary = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 )
-            int activeWeaponInt = SURVIVAL_GetActiveWeaponSlot( player )
-            entity activeWeapon = player.GetNormalWeapon( activeWeaponInt )
-
-            if  ( primary == null ) weapon = GiveWeaponToPlayer( player, weaponName, WEAPON_INVENTORY_SLOT_PRIMARY_0 )
-            else if ( secondary == null ) weapon = GiveWeaponToPlayer( player, weaponName, WEAPON_INVENTORY_SLOT_PRIMARY_1 )
-            else if ( IsValid( activeWeapon ) ) weapon = SwapWeaponToPlayer( player, activeWeapon, weaponName, activeWeaponInt )
-            else printt( "void" )
-
-            if ( weapon != null ) weapon.AddMod( "survival_finite_ammo" )
-
-            if ( PlayerHasWeapon( player, weaponName ) ) player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponName )
-        }
-    }
-
-    entity function GiveWeaponToPlayer( entity player, string weaponName, int inventorySlot )
-    {
-        entity weapon
-
-        if ( weaponName == "mp_weapon_grenade_emp" || weaponName == "mp_weapon_frag_grenade" || weaponName == "mp_weapon_thermite_grenade" )
-        {
-            SURVIVAL_AddToPlayerInventory( player, weaponName, 1, false )
-
-            weapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
-
-            printt(weapon)
-
-            //if ( IsValid( weapon ) )
-		    //{
-                weapon = player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponName )
-            //}
-
-        }
-        else weapon = player.GiveWeapon( weaponName, inventorySlot )
-
-        return weapon
-    }
-
-    entity function SwapWeaponToPlayer( entity player, entity weaponSwap, string weaponName, int inventorySlot )
-    {
-        entity weapon
-
-        if ( weaponName == "mp_weapon_grenade_emp" || weaponName == "mp_weapon_frag_grenade" || weaponName == "mp_weapon_thermite_grenade" )
-        {
-            SURVIVAL_AddToPlayerInventory( player, weaponName, 1, false )
-
-            weapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
-
-            if ( IsValid( weapon ) )
-		    {
-                weapon = player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponName )
+                return USE + format( WEAPON_WALL_BUY_AMMO, weaponName, weaponPriceAmmo )
             }
+
+            //if ( !PlayerHasEnoughScore( GetLocalViewPlayer(), weaponPrice ) )
+            //    return format( WEAPON_WALL_NO_SCORE_WEAPON, weaponName, weaponPrice )
+
+            return USE + format( WEAPON_WALL_BUY_WEAPON, weaponName, weaponPrice )
         }
-        else
+
+        // RUI Function
+        void function WeaponWall_DisplayRui( entity ent, entity player, var rui, ExtendedUseSettings settings )
         {
-            player.TakeWeaponByEntNow( weaponSwap )
-            weapon = player.GiveWeapon( weaponName, inventorySlot )
+            RuiSetString( rui, "holdButtonHint", settings.holdHint )
+            RuiSetString( rui, "hintText", settings.hint )
+            RuiSetGameTime( rui, "startTime", Time() )
+            RuiSetGameTime( rui, "endTime", Time() + settings.duration )
+        }
+    #endif // CLIENT
+
+
+    #if SERVER
+        // Gives a weapon depending on the configuration of the player's inventory
+        void function ServerWeaponWallUseSuccess( entity usableWeaponWall, entity player )
+        {
+            entity weapon ; int weaponIdx = GetWeaponIdx( usableWeaponWall ) ; string weaponName = eWeaponZombieName[ weaponIdx ][ 0 ]
+
+            if ( PlayerHasWeapon( player, weaponName ) )
+            {
+                string ammoType
+                LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( weaponName )
+    			//if ( weaponData.ammoType == "bullet" )
+                SURVIVAL_AddToPlayerInventory( player, weaponData.ammoType, 40, true )
+                printt(weaponData.ammoType)
+            }
+            else
+            {
+                entity primary = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+                entity secondary = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+                int activeWeaponInt = SURVIVAL_GetActiveWeaponSlot( player )
+                entity activeWeapon = player.GetNormalWeapon( activeWeaponInt )
+
+                if  ( primary == null ) weapon = GiveWeaponToPlayer( player, weaponName, WEAPON_INVENTORY_SLOT_PRIMARY_0 )
+                else if ( secondary == null ) weapon = GiveWeaponToPlayer( player, weaponName, WEAPON_INVENTORY_SLOT_PRIMARY_1 )
+                else if ( IsValid( activeWeapon ) ) weapon = SwapWeaponToPlayer( player, activeWeapon, weaponName, activeWeaponInt )
+                else printt( "void" )
+
+                if ( weapon != null ) weapon.AddMod( "survival_finite_ammo" )
+
+                if ( PlayerHasWeapon( player, weaponName ) ) player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponName )
+            }
+
+            Remote_CallFunction_NonReplay( player, "ServerCallback_RefreshInventory" )
         }
 
-        return weapon
-    }
 
-    entity function CreateWeaponWall( int index, vector pos, vector ang, bool isHighlighted = true )
+        // Give a weapon to the player without swap
+        entity function GiveWeaponToPlayer( entity player, string weaponName, int inventorySlot )
+        {
+            entity weapon
+
+            if ( weaponName == "mp_weapon_grenade_emp" || weaponName == "mp_weapon_frag_grenade" || weaponName == "mp_weapon_thermite_grenade" )
+            {
+                SURVIVAL_AddToPlayerInventory( player, weaponName, 1, false )
+
+                weapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+
+                printt(weapon)
+
+                //if ( IsValid( weapon ) )
+    		    //{
+                    weapon = player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponName )
+                //}
+
+                SURVIVAL_AddToPlayerInventory( player, weaponName, 1 )
+
+            }
+            else weapon = player.GiveWeapon( weaponName, inventorySlot )
+
+            return weapon
+        }
+
+
+        // Give a weapon to the player with swap
+        entity function SwapWeaponToPlayer( entity player, entity weaponSwap, string weaponName, int inventorySlot )
+        {
+            entity weapon
+
+            if ( weaponName == "mp_weapon_grenade_emp" || weaponName == "mp_weapon_frag_grenade" || weaponName == "mp_weapon_thermite_grenade" )
+            {
+                SURVIVAL_AddToPlayerInventory( player, weaponName, 1, false )
+
+                weapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
+
+                if ( IsValid( weapon ) )
+    		    {
+                    weapon = player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponName )
+                }
+            }
+            else
+            {
+                player.TakeWeaponByEntNow( weaponSwap )
+                weapon = player.GiveWeapon( weaponName, inventorySlot )
+            }
+
+            return weapon
+        }
+
+        // Create weapon wall
+        entity function CreateWeaponWall( int index, vector pos, vector ang, bool isHighlighted = true )
+        {
+            entity weaponWall = CreateEntity( "prop_dynamic" )
+            weaponWall.SetModel( eWeaponZombieModel[ index ] )
+            weaponWall.SetScriptName( WEAPON_WALL_SCRIPT_NAME )
+            weaponWall.NotSolid()
+            weaponWall.SetFadeDistance( 20000 )
+            weaponWall.SetOrigin( pos )
+            weaponWall.SetAngles( ang )
+
+            if ( isHighlighted )
+                SetSurvivalPropHighlight( weaponWall, "survival_item_weapon", false )
+
+            DispatchSpawn( weaponWall )
+
+            return weaponWall
+        }
+    #endif // SERVER
+
+    //    _    _ _______ _____ _      _____ _________     __
+    //   | |  | |__   __|_   _| |    |_   _|__   __\ \   / /
+    //   | |  | |  | |    | | | |      | |    | |   \ \_/ / 
+    //   | |  | |  | |    | | | |      | |    | |    \   /  
+    //   | |__| |  | |   _| |_| |____ _| |_   | |     | |   
+    //    \____/   |_|  |_____|______|_____|  |_|     |_|   
+
+    // Get the weapon index
+    int function GetWeaponIdx( entity usableWeaponWall )
     {
-        entity weaponWall = CreateEntity( "prop_dynamic" )
-        weaponWall.SetModel( eWeaponZombieModel[ index ] )
-        weaponWall.SetScriptName( WEAPON_WALL_SCRIPT_NAME )
-        weaponWall.NotSolid()
-        weaponWall.SetFadeDistance( 20000 )
-        weaponWall.SetOrigin( pos )
-        weaponWall.SetAngles( ang )
+        int weaponIdx ; asset modelName = usableWeaponWall.GetModelName()
 
-        if ( isHighlighted )
-            SetSurvivalPropHighlight( weaponWall, "survival_item_weapon", false )
+        for ( int i = 0 ; i < eWeaponZombieModel.len() ; i++  )
+        {
+            if ( modelName == eWeaponZombieModel[ i ] )
+                weaponIdx = i
+        }
 
-        DispatchSpawn( weaponWall )
-        
-        return weaponWall
+        return weaponIdx
     }
-#endif
+
+#endif // SERVER || CLIENT

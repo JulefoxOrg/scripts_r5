@@ -8,13 +8,13 @@
 
     #if SERVER
         global function CreateWeaponInMysteryBox
-        const asset NESSY_MODEL   = $"mdl/domestic/nessy_doll.rmdl"
     #endif // SERVER
 
     #if CLIENT
     #endif // CLIENT
 
     // Consts
+        const asset  NESSY_MODEL                          = $"mdl/domestic/nessy_doll.rmdl"
         const float  MYSTERY_BOX_WEAPON_ON_USE_DURATION   = 0.0
         const string MYSTERY_BOX_TAKE_WEAPON              = "to take %s"
         const string MYSTERY_BOX_WEAPON_SCRIPT_NAME       = "MysteryBoxWeaponScriptName"
@@ -57,7 +57,7 @@
     }
 
 
-    // Check by the name of the script if it is a weapon in a mystery box
+    // Check by script name if it is a weapon in a mystery box
     bool function IsValidWeaponMysteryBox( entity ent )
     {
         if ( ent.GetScriptName() == MYSTERY_BOX_WEAPON_SCRIPT_NAME )

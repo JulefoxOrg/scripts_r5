@@ -1,77 +1,94 @@
 
-untyped
+#if SERVER || CLIENT
 
-global function ShZombieScore_Init
+    untyped
 
-global function PlayerHasEnoughScore
-global function AddScoreToPlayer
-global function RemoveScoreToPlayer
+    // Global functions
+        global function ShZombieScore_Init
+
+        global function PlayerHasEnoughScore
+        global function AddScoreToPlayer
+        global function RemoveScoreToPlayer
 
 
-void function ShZombieScore_Init()
-{
-    #if SERVER && NIGHTMARE_DEV
-        AddClientCommandCallback( "$", ClientCommand_GetPlayerScore )
-        AddClientCommandCallback( "sa", ClientCommand_AddScoreToPlayer )
-        AddClientCommandCallback( "sr", ClientCommand_RemoveScoreToPlayer )
-    #endif // SERVER && NIGHTMARE_DEV
-}
-
-void function AddScoreToPlayer( entity player, int score )
-{
-    #if SERVER
-        CustomZombieSystemGlobal totalScore = GetPlayerInSystemGlobal( player )
-        totalScore.score = totalScore.score + score
-
-        Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateClientScoreToPlayer", player, totalScore.score )
-    #endif // SERVER
-}
-
-void function RemoveScoreToPlayer( entity player, int score )
-{
-    #if SERVER
-        CustomZombieSystemGlobal totalScore = GetPlayerInSystemGlobal( player )
-        totalScore.score = totalScore.score - score
-
-        if ( totalScore.score < 0 ) totalScore.score = 0
-
-        Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateClientScoreToPlayer", player, totalScore.score )
-    #endif // SERVER
-}
-
-bool function PlayerHasEnoughScore( entity player, int weaponPrice )
-{
-    if ( GetPlayerScore( player ) >= weaponPrice )
-        return true
-
-    return false
-}
-
-#if SERVER
-    bool function ClientCommand_GetPlayerScore( entity player, array<string> args )
+    // Init
+    void function ShZombieScore_Init()
     {
-    	printt( format( "Player have: %i $", GetPlayerScore( player ) ) )
-    
-    	return true
+        #if SERVER && NIGHTMARE_DEV
+            AddClientCommandCallback( "$", ClientCommand_GetPlayerScore )
+            AddClientCommandCallback( "sa", ClientCommand_AddScoreToPlayer )
+            AddClientCommandCallback( "sr", ClientCommand_RemoveScoreToPlayer )
+        #endif // SERVER && NIGHTMARE_DEV
     }
 
-    bool function ClientCommand_AddScoreToPlayer( entity player, array<string> args )
+
+    // Compare the price of an object with the player's score
+    bool function PlayerHasEnoughScore( entity player, int weaponPrice )
     {
-        if ( args.len() == 0 )
+        if ( GetPlayerScore( player ) >= weaponPrice )
             return true
 
-    	AddScoreToPlayer( player, int( args[0] ) )
-    
-    	return true
+        return false
     }
 
-    bool function ClientCommand_RemoveScoreToPlayer( entity player, array<string> args )
+
+    // Add score to a specific player
+    void function AddScoreToPlayer( entity player, int score )
     {
-    	if ( args.len() == 0 )
-            return true
+        #if SERVER
+            CustomZombieSystemGlobal totalScore = GetPlayerInSystemGlobal( player )
+            totalScore.score = totalScore.score + score
 
-    	RemoveScoreToPlayer( player, int( args[0] ) )
-
-    	return true
+            Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateClientScoreToPlayer", player, totalScore.score )
+        #endif // SERVER
     }
-#endif
+
+
+    // Remove score to a specific player
+    void function RemoveScoreToPlayer( entity player, int score )
+    {
+        #if SERVER
+            CustomZombieSystemGlobal totalScore = GetPlayerInSystemGlobal( player )
+            totalScore.score = totalScore.score - score
+
+            if ( totalScore.score < 0 ) totalScore.score = 0
+
+            Remote_CallFunction_NonReplay( player, "ServerCallback_UpdateClientScoreToPlayer", player, totalScore.score )
+        #endif // SERVER
+    }
+
+
+    #if SERVER
+        // Get how many score player have by client command
+        bool function ClientCommand_GetPlayerScore( entity player, array<string> args )
+        {
+        	printt( format( "Player have: %i $", GetPlayerScore( player ) ) )
+
+        	return true
+        }
+
+
+        //  Add score to player by client command
+        bool function ClientCommand_AddScoreToPlayer( entity player, array<string> args )
+        {
+            if ( args.len() == 0 )
+                return true
+
+        	AddScoreToPlayer( player, int( args[0] ) )
+
+        	return true
+        }
+
+
+        // Remove score to player by client command
+        bool function ClientCommand_RemoveScoreToPlayer( entity player, array<string> args )
+        {
+        	if ( args.len() == 0 )
+                return true
+
+        	RemoveScoreToPlayer( player, int( args[0] ) )
+
+        	return true
+        }
+    #endif // SERVER
+#endif // SERVER || CLIENT
