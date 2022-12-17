@@ -48,7 +48,7 @@
     {
         CustomZombieSystemGlobal player = GetPlayerInSystemGlobal( GetLocalClientPlayer() )
 
-        string playerScore = format( SCORE, player.score )
+        string playerScore = format( SCORE, player.score ) // TransformString()
         if(IsValid( player.playerScoreUI ))
         RuiSetString( player.playerScoreUI, "messageText", playerScore )
     }
@@ -65,13 +65,38 @@
 
         if(!IsValid( player.playerScoreUI ))
         {
-            string playerScore = format( SCORE, player.score )
+            string playerScore = format( SCORE, player.score ) // TransformString()
             player.playerScoreUI = RuiCreate( $"ui/announcement_quick_right.rpak", screenAlignmentTopoScoreText, RUI_DRAW_HUD, RUI_SORT_SCREENFADE + 1 )
             RuiSetGameTime( player.playerScoreUI, "startTime", Time() )
             RuiSetString( player.playerScoreUI, "messageText", playerScore )
             RuiSetFloat( player.playerScoreUI, "duration", 9999999 )
             RuiSetFloat3( player.playerScoreUI, "eventColor", SrgbToLinear( <128, 188, 255> ) )
         }
+    }
+
+
+    // Test
+    string function TransformString()
+    {
+        CustomZombieSystemGlobal player = GetPlayerInSystemGlobal( GetLocalClientPlayer() )
+
+        string newString = ""
+        string score = string ( player.score )
+
+        int scoreLen = score.len()
+        int removeLast3Number = scoreLen - 3
+
+        if ( scoreLen >= 4 )
+        {
+            newString += score.slice( 0, removeLast3Number )
+            newString += " "
+            newString += score.slice( removeLast3Number, scoreLen )
+        }
+        else newString += score
+
+        newString += " $"
+
+        return newString
     }
 
 
