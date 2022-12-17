@@ -50,8 +50,9 @@
     global struct CustomZombieMysteryBox
     {
         array < entity > mysteryBoxArray
-        bool mysteryBoxCanUse   = false
-        bool weaponCanUse       = false
+        bool mysteryBoxCanUse         = false
+        bool weaponCanUse             = false
+        array < entity > weaponPurchaserCanUse
         entity mysteryBoxEnt
         entity mysteryBoxFx
         entity mysteryBoxWeapon
@@ -202,6 +203,9 @@
         
         if ( !PlayerHasEnoughScore( player, MYSTERY_BOX_COST ) )
             return
+
+        mysteryBoxStruct.weaponPurchaserCanUse = []
+        mysteryBoxStruct.weaponPurchaserCanUse.append( player )
 
         #if SERVER
             MysteryBoxSetUsable( player, mysteryBox, false )

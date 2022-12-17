@@ -95,6 +95,9 @@
         if ( !GetMysteryBoxFromEnt( weaponMysteryBox ).weaponCanUse )
             return false
 
+        if ( !GetMysteryBoxFromEnt( weaponMysteryBox ).weaponPurchaserCanUse.contains( player ) )
+            return false
+
         return true
     }
 
