@@ -112,8 +112,6 @@
     {
         CustomZombieMysteryBox mysteryBoxStruct = GetMysteryBoxFromEnt( weaponMysteryBox )
         mysteryBoxStruct.playerAllowedToTakeWeapon.extend( mysteryBoxStruct.playerAllowedToTakeWeaponTemp )
-        foreach ( player in mysteryBoxStruct.playerAllowedToTakeWeapon )
-        printt( player )
     }
 
 
