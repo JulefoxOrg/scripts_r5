@@ -108,9 +108,12 @@
 
 
     // Set the weapon mystery box usable
-    void function ServerCallback_SetWeaponMysteryBoxUsable( entity weaponMysteryBox, bool isUsable )
+    void function ServerCallback_SetWeaponMysteryBoxUsable( entity weaponMysteryBox )
     {
-        GetMysteryBoxFromEnt( weaponMysteryBox ).weaponCanUse = isUsable
+        CustomZombieMysteryBox mysteryBoxStruct = GetMysteryBoxFromEnt( weaponMysteryBox )
+        mysteryBoxStruct.playerAllowedToTakeWeapon.extend( mysteryBoxStruct.playerAllowedToTakeWeaponTemp )
+        foreach ( player in mysteryBoxStruct.playerAllowedToTakeWeapon )
+        printt( player )
     }
 
 

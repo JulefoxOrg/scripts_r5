@@ -8,6 +8,7 @@
 
     #if SERVER
         global function CreateWeaponInMysteryBox
+        global function MysteryBoxWeaponSetUsable
     #endif // SERVER
 
     #if CLIENT
@@ -92,10 +93,7 @@
         if ( !SURVIVAL_PlayerCanUse_AnimatedInteraction( player, weaponMysteryBox ) )
             return false
 
-        if ( !GetMysteryBoxFromEnt( weaponMysteryBox ).weaponCanUse )
-            return false
-
-        if ( !GetMysteryBoxFromEnt( weaponMysteryBox ).weaponPurchaserCanUse.contains( player ) )
+        if ( !GetMysteryBoxFromEnt( weaponMysteryBox ).playerAllowedToTakeWeapon.contains( player ) )
             return false
 
         return true
@@ -127,8 +125,6 @@
     void function WeaponMysteryBoxUseSuccess( entity weaponMysteryBox, entity player, ExtendedUseSettings settings )
     {
         CustomZombieMysteryBox mysteryBoxStruct = GetMysteryBoxFromEnt( weaponMysteryBox )
-
-        mysteryBoxStruct.weaponCanUse = false
         
         #if SERVER
             ServerWeaponWallUseSuccess( weaponMysteryBox, player )
@@ -144,6 +140,9 @@
         {
             int weaponIdx       = GetWeaponIdx( weaponMysteryBox )
             string weaponName   = eWeaponZombieName[ weaponIdx ][ 1 ]
+
+            if ( !GetMysteryBoxFromEnt( weaponMysteryBox ).playerAllowedToTakeWeapon.contains( GetLocalClientPlayer() ) )
+                return ""
             
             return USE + format( MYSTERY_BOX_TAKE_WEAPON, weaponName )
         }
@@ -167,6 +166,15 @@
             DispatchSpawn( weapon )
 
             return weapon
+        }
+
+
+        // Set by true or false if the weapon is usable
+        void function MysteryBoxWeaponSetUsable( entity player, entity weaponMysteryBox )
+        {
+            CustomZombieMysteryBox mysteryBoxStruct = GetMysteryBoxFromEnt( weaponMysteryBox )
+            mysteryBoxStruct.playerAllowedToTakeWeapon.extend( mysteryBoxStruct.playerAllowedToTakeWeaponTemp )
+            Remote_CallFunction_NonReplay( player, "ServerCallback_SetWeaponMysteryBoxUsable", weaponMysteryBox )
         }
     #endif // SERVER
 

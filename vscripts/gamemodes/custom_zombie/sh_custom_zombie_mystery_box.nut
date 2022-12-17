@@ -12,7 +12,6 @@
     #if SERVER
         global function CreateMysteryBox
         global function DestroyWeaponByDeadline_Thread
-        global function MysteryBoxWeaponSetUsable
     #endif // SERVER
 
     #if CLIENT
@@ -50,17 +49,16 @@
     global struct CustomZombieMysteryBox
     {
         array < entity > mysteryBoxArray
-        bool mysteryBoxCanUse         = false
-        bool weaponCanUse             = false
-        array < entity > weaponPurchaserCanUse
+        array < entity > playerAllowedToTakeWeapon
+        array < entity > playerAllowedToTakeWeaponTemp
+        bool mysteryBoxCanUse   = false
         entity mysteryBoxEnt
         entity mysteryBoxFx
         entity mysteryBoxWeapon
         entity mysteryBoxWeaponScriptMover
         string targetName
-        array < entity > entityCanTakeWeapon
         table < entity, CustomZombieMysteryBox > mysteryBox
-
+        
         #if SERVER
             bool changeLocation
             int maxUseIdx
@@ -204,12 +202,12 @@
         if ( !PlayerHasEnoughScore( player, MYSTERY_BOX_COST ) )
             return
 
-        mysteryBoxStruct.weaponPurchaserCanUse = []
-        mysteryBoxStruct.weaponPurchaserCanUse.append( player )
+        mysteryBoxStruct.playerAllowedToTakeWeaponTemp = []
+        mysteryBoxStruct.playerAllowedToTakeWeapon = []
+        mysteryBoxStruct.playerAllowedToTakeWeaponTemp.append( player )
 
         #if SERVER
             MysteryBoxSetUsable( player, mysteryBox, false )
-            MysteryBoxWeaponSetUsable( player, mysteryBox, false )
 
             mysteryBoxStruct.changeLocation = false
             
@@ -317,7 +315,7 @@
             {
                 wait 0.1
 
-                MysteryBoxWeaponSetUsable( player, weapon, true )
+                MysteryBoxWeaponSetUsable( player, weapon )
 
                 wait 3
             }
@@ -376,15 +374,6 @@
             GetMysteryBox( mysteryBox ).mysteryBoxCanUse = isUsable
             foreach( players in GetAllPlayerInSystemGlobal() )
             Remote_CallFunction_NonReplay( players, "ServerCallback_SetMysteryBoxUsable", mysteryBox, isUsable )
-        }
-
-
-        // Set by true or false if the weapon is usable
-        void function MysteryBoxWeaponSetUsable( entity player, entity weaponMysteryBox, bool isUsable )
-        {
-            GetMysteryBoxFromEnt( weaponMysteryBox ).weaponCanUse = isUsable
-            foreach( players in GetAllPlayerInSystemGlobal() )
-            Remote_CallFunction_NonReplay( players, "ServerCallback_SetWeaponMysteryBoxUsable", weaponMysteryBox, isUsable )
         }
 
 
