@@ -113,6 +113,7 @@
         GetMysteryBoxFromEnt( weaponMysteryBox ).weaponCanUse = isUsable
     }
 
+
     void function ServerCallback_MysteryBoxChangeLocation_DoAnnouncement()
     {
         foreach( player in GetPlayerArray() )

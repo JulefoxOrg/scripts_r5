@@ -7,6 +7,7 @@
         global function ShCustomZombie_Init
 
         global function GetPlayerInSystemGlobal
+        global function GetAllPlayerInSystemGlobal
         global function GetPlayerScore
 
 
@@ -34,6 +35,7 @@
 
         CustomZombieSystemPerks systemPerks
 
+        array < entity > playerArraySystemGlobal
         table < entity, CustomZombieSystemGlobal > playerSystemGlobal
     }
     global CustomZombieSystemGlobal customZombieSystemGlobal
@@ -69,6 +71,7 @@
     {
         CustomZombieSystemGlobal newPlayer
 
+        customZombieSystemGlobal.playerArraySystemGlobal.append( player )
         customZombieSystemGlobal.playerSystemGlobal[ player ] <- newPlayer
 
         return customZombieSystemGlobal.playerSystemGlobal[ player ]
@@ -79,6 +82,13 @@
     CustomZombieSystemGlobal function GetPlayerInSystemGlobal( entity player )
     {
         return customZombieSystemGlobal.playerSystemGlobal[ player ]
+    }
+
+
+    // Get all players
+    array < entity > function GetAllPlayerInSystemGlobal()
+    {
+        return customZombieSystemGlobal.playerArraySystemGlobal
     }
 
 

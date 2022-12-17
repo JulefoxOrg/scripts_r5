@@ -92,7 +92,7 @@
         if ( !SURVIVAL_PlayerCanUse_AnimatedInteraction( player, weaponMysteryBox ) )
             return false
 
-        if ( GetMysteryBoxFromEnt( weaponMysteryBox ).weaponCanUse == false )
+        if ( !GetMysteryBoxFromEnt( weaponMysteryBox ).weaponCanUse )
             return false
 
         return true

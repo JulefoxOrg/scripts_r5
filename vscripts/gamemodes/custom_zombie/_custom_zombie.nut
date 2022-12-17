@@ -47,6 +47,7 @@
     void function MysteryBox()
     {
         CreateMysteryBox( < 3910.18848, 5499.14404, -4295.94385 >, < 0, -140, 0 > )
+        CreateMysteryBox( < 3615.48462, 5575.7124, -4303.90625 >, < 0, -140, 0 > )
     }
 
 
