@@ -18,6 +18,13 @@
         global function MysteryBox_DisplayRui
     #endif // CLIENT
 
+    global enum eMysteryBoxState
+    {
+        USABLE = 0,
+        THREAD_IS_ACTIVE = 1
+    }
+    int uniqueGradeIdx = 1000
+
     // Consts
         const float  MYSTERY_BOX_ON_USE_DURATION        = 0.0
         const float  MYSTERY_BOX_WEAPON_MOVE_TIME       = 3
@@ -49,13 +56,11 @@
     global struct CustomZombieMysteryBox
     {
         array < entity > mysteryBoxArray
-        array < entity > playerAllowedToTakeWeapon
-        array < entity > playerAllowedToTakeWeaponTemp
-        bool mysteryBoxCanUse   = false
         entity mysteryBoxEnt
         entity mysteryBoxFx
         entity mysteryBoxWeapon
         entity mysteryBoxWeaponScriptMover
+        int uniqueGradeIdx
         string targetName
         table < entity, CustomZombieMysteryBox > mysteryBox
         
@@ -117,6 +122,7 @@
 
         newMysteryBox.mysteryBoxEnt = mysteryBox
         newMysteryBox.targetName = UniqueMysteryBoxString( "MysteryBox" )
+        newMysteryBox.uniqueGradeIdx = uniqueGradeIdx++
 
         #if SERVER
             SetTargetName( mysteryBox, newMysteryBox.targetName )
@@ -138,9 +144,8 @@
             mysteryBox.SetUsableByGroup( "pilot" )
             mysteryBox.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
             mysteryBox.SetUsablePriority( USABLE_PRIORITY_MEDIUM )
+            GradeFlagsSet( mysteryBox, eMysteryBoxState.USABLE )
         #endif // SERVER
-
-        GetMysteryBox( mysteryBox ).mysteryBoxCanUse = true
 
         SetCallback_CanUseEntityCallback( mysteryBox, MysteryBox_CanUse )
         AddCallback_OnUseEntity( mysteryBox, OnUseProcessingMysteryBox )
@@ -166,7 +171,7 @@
         if ( !SURVIVAL_PlayerCanUse_AnimatedInteraction( player, mysteryBox ) )
             return false
         
-        if ( GetMysteryBox( mysteryBox ).mysteryBoxCanUse == false )
+        if ( mysteryBox.GetGrade() != eMysteryBoxState.USABLE )
             return false
 
         return true
@@ -202,12 +207,8 @@
         if ( !PlayerHasEnoughScore( player, MYSTERY_BOX_COST ) )
             return
 
-        mysteryBoxStruct.playerAllowedToTakeWeaponTemp = []
-        mysteryBoxStruct.playerAllowedToTakeWeapon = []
-        mysteryBoxStruct.playerAllowedToTakeWeaponTemp.append( player )
-
         #if SERVER
-            MysteryBoxSetUsable( player, mysteryBox, false )
+            GradeFlagsSet( mysteryBox, eMysteryBoxState.THREAD_IS_ACTIVE )
 
             mysteryBoxStruct.changeLocation = false
             
@@ -276,26 +277,26 @@
             weapon = CreateWeaponInMysteryBox( 0, mysteryBoxOrigin + MYSTERY_BOX_WEAPON_ORIGIN_OFFSET, mysteryBoxAngles + MYSTERY_BOX_WEAPON_ANGLES_OFFSET, mysteryBoxStruct.targetName )
             script_mover = CreateScriptMover( mysteryBoxOrigin + MYSTERY_BOX_WEAPON_ORIGIN_OFFSET, mysteryBoxAngles + MYSTERY_BOX_WEAPON_ANGLES_OFFSET )
 
-            weapon.SetParent( script_mover )
+            if ( IsValid( weapon ) ) weapon.SetParent( script_mover )
 
             float currentTime = Time()
             float startTime = currentTime
             float endTime = startTime + MYSTERY_BOX_WEAPON_MOVE_TIME
             float waitVar = 0.01
 
-            script_mover.NonPhysicsMoveTo( weapon.GetOrigin() + MYSTERY_BOX_WEAPON_MOVE_TO, MYSTERY_BOX_WEAPON_MOVE_TIME, 0, MYSTERY_BOX_WEAPON_MOVE_TIME )
+            if ( IsValid( script_mover ) ) script_mover.NonPhysicsMoveTo( weapon.GetOrigin() + MYSTERY_BOX_WEAPON_MOVE_TO, MYSTERY_BOX_WEAPON_MOVE_TIME, 0, MYSTERY_BOX_WEAPON_MOVE_TIME )
 
             while ( endTime > currentTime )
             {
-                weapon.SetModel( eWeaponZombieModel[ RandomIntRange( 0, eWeaponZombieIdx.len() - 1 ) ] )
+                if ( IsValid( weapon ) ) weapon.SetModel( eWeaponZombieModel[ RandomIntRange( 0, eWeaponZombieIdx.len() - 1 ) ] )
                 currentTime = Time()
                 wait waitVar
             }
 
             if ( mysteryBoxStruct.changeLocation )
             {
-                weapon.SetAngles( weapon.GetAngles() + < 0, 180, 0 > )
-                weapon.SetModel( NESSY_MODEL )
+                if ( IsValid( weapon ) ) weapon.SetAngles( weapon.GetAngles() + < 0, 180, 0 > )
+                if ( IsValid( weapon ) ) weapon.SetModel( NESSY_MODEL )
 
                     wait 0.4
 
@@ -315,7 +316,7 @@
             {
                 wait 0.1
 
-                MysteryBoxWeaponSetUsable( player, weapon )
+                    GradeFlagsSet( player, mysteryBoxStruct.uniqueGradeIdx )
 
                 wait 3
             }
@@ -326,6 +327,8 @@
         void function DestroyWeaponByDeadline_Thread( entity player, entity mysteryBox )
         {
             CustomZombieMysteryBox mysteryBoxStruct = GetMysteryBox( mysteryBox )
+
+            GradeFlagsClear( player, mysteryBoxStruct.uniqueGradeIdx )
 
             entity weapon = mysteryBoxStruct.mysteryBoxWeapon
             entity script_mover = mysteryBoxStruct.mysteryBoxWeaponScriptMover
@@ -339,7 +342,8 @@
 
                 wait 0.1
 
-            MysteryBoxSetUsable( player, mysteryBox, true )
+            GradeFlagsClear( mysteryBox, eMysteryBoxState.THREAD_IS_ACTIVE )
+            GradeFlagsSet( mysteryBox, eMysteryBoxState.USABLE )
             
         }
 
@@ -365,15 +369,6 @@
                 wait 0.1
 
             if ( IsValid( toDissolve ) ) toDissolve.Dissolve( ENTITY_DISSOLVE_CORE, < 0, 0, 0 >, 1000 )
-        }
-
-
-        // Set by true or false if the mystery box is usable
-        void function MysteryBoxSetUsable( entity player, entity mysteryBox, bool isUsable )
-        {
-            GetMysteryBox( mysteryBox ).mysteryBoxCanUse = isUsable
-            foreach( players in GetAllPlayerInSystemGlobal() )
-            Remote_CallFunction_NonReplay( players, "ServerCallback_SetMysteryBoxUsable", mysteryBox, isUsable )
         }
 
 

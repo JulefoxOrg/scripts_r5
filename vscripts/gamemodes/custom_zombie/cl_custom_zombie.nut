@@ -9,8 +9,6 @@
         global function ServerCallback_OnClientDisconnected
         global function ServerCallback_UpdateClientScoreToPlayer
         global function ServerCallback_RUIInit
-        global function ServerCallback_SetMysteryBoxUsable
-        global function ServerCallback_SetWeaponMysteryBoxUsable
         global function ServerCallback_MysteryBoxChangeLocation_DoAnnouncement
 
     // Consts
@@ -97,21 +95,6 @@
         newString += " $"
 
         return newString
-    }
-
-
-    // Set the mystery box usable
-    void function ServerCallback_SetMysteryBoxUsable( entity mysteryBox, bool isUsable )
-    {
-        GetMysteryBox( mysteryBox ).mysteryBoxCanUse = isUsable
-    }
-
-
-    // Set the weapon mystery box usable
-    void function ServerCallback_SetWeaponMysteryBoxUsable( entity weaponMysteryBox )
-    {
-        CustomZombieMysteryBox mysteryBoxStruct = GetMysteryBoxFromEnt( weaponMysteryBox )
-        mysteryBoxStruct.playerAllowedToTakeWeapon.extend( mysteryBoxStruct.playerAllowedToTakeWeaponTemp )
     }
 
 

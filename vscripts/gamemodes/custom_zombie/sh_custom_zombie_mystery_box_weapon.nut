@@ -8,7 +8,6 @@
 
     #if SERVER
         global function CreateWeaponInMysteryBox
-        global function MysteryBoxWeaponSetUsable
     #endif // SERVER
 
     #if CLIENT
@@ -93,7 +92,7 @@
         if ( !SURVIVAL_PlayerCanUse_AnimatedInteraction( player, weaponMysteryBox ) )
             return false
 
-        if ( !GetMysteryBoxFromEnt( weaponMysteryBox ).playerAllowedToTakeWeapon.contains( player ) )
+        if ( !GradeFlagsHas( player, GetMysteryBoxFromEnt( weaponMysteryBox ).uniqueGradeIdx ) )
             return false
 
         return true
@@ -163,15 +162,6 @@
             DispatchSpawn( weapon )
 
             return weapon
-        }
-
-
-        // Set by true or false if the weapon is usable
-        void function MysteryBoxWeaponSetUsable( entity player, entity weaponMysteryBox )
-        {
-            CustomZombieMysteryBox mysteryBoxStruct = GetMysteryBoxFromEnt( weaponMysteryBox )
-            mysteryBoxStruct.playerAllowedToTakeWeapon.extend( mysteryBoxStruct.playerAllowedToTakeWeaponTemp )
-            Remote_CallFunction_NonReplay( player, "ServerCallback_SetWeaponMysteryBoxUsable", weaponMysteryBox )
         }
     #endif // SERVER
 
