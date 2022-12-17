@@ -140,9 +140,6 @@
         {
             int weaponIdx       = GetWeaponIdx( weaponMysteryBox )
             string weaponName   = eWeaponZombieName[ weaponIdx ][ 1 ]
-
-            if ( !GetMysteryBoxFromEnt( weaponMysteryBox ).playerAllowedToTakeWeapon.contains( GetLocalClientPlayer() ) )
-                return ""
             
             return USE + format( MYSTERY_BOX_TAKE_WEAPON, weaponName )
         }
