@@ -16,7 +16,7 @@
     // Consts
         const asset  NESSY_MODEL                          = $"mdl/domestic/nessy_doll.rmdl"
         const float  MYSTERY_BOX_WEAPON_ON_USE_DURATION   = 0.0
-        const string MYSTERY_BOX_TAKE_WEAPON              = "to take %s"
+        const string MYSTERY_BOX_TAKE_WEAPON              = "to take %s\n"
         const string MYSTERY_BOX_WEAPON_SCRIPT_NAME       = "MysteryBoxWeaponScriptName"
         const string USE                                  = "Press %use% "
 
@@ -102,6 +102,15 @@
     // Callback if the weapon is used
     void function OnUseProcessingWeaponMysteryBox( entity weaponMysteryBox, entity playerUser, int useInputFlags )
     {
+        if ( ( useInputFlags & USE_INPUT_ALT ) )
+        {
+            #if SERVER
+                foreach ( players in GetPlayerArrayOfTeam( playerUser.GetTeam() ) )
+                    GradeFlagsSet( players, GetMysteryBoxFromEnt( weaponMysteryBox ).uniqueGradeIdx )
+                GradeFlagsClear( playerUser, GetMysteryBoxFromEnt( weaponMysteryBox ).uniqueGradeIdx )
+            #endif // SERVER
+        }
+
         if ( !( useInputFlags & USE_INPUT_LONG ) )
             return
 

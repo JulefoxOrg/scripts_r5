@@ -97,13 +97,15 @@
     // Dev testing
     bool function ClientCommand_CustomZombieDevCommand( entity player, array < string > args )
     {
-        CustomZombieSystemGlobal Syst = GetPlayerInSystemGlobal( player )
+        /* CustomZombieSystemGlobal Syst = GetPlayerInSystemGlobal( player )
 
         foreach ( weapons in player.GetMainWeapons() )
         {
             float reloadTime = weapons.GetWeaponSettingFloat( eWeaponVar.reload_time )
             printt( reloadTime )
-        }
+        } */
+
+        foreach ( players in GetPlayerArrayOfTeam( player.GetTeam() ) ) printt( players )
 
         return true
     }

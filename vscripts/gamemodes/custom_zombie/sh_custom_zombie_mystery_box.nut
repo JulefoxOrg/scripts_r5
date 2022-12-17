@@ -328,7 +328,8 @@
         {
             CustomZombieMysteryBox mysteryBoxStruct = GetMysteryBox( mysteryBox )
 
-            GradeFlagsClear( player, mysteryBoxStruct.uniqueGradeIdx )
+            foreach ( players in GetPlayerArrayOfTeam( player.GetTeam() ) )
+            GradeFlagsClear( players, mysteryBoxStruct.uniqueGradeIdx )
 
             entity weapon = mysteryBoxStruct.mysteryBoxWeapon
             entity script_mover = mysteryBoxStruct.mysteryBoxWeaponScriptMover
@@ -344,7 +345,6 @@
 
             GradeFlagsClear( mysteryBox, eMysteryBoxState.THREAD_IS_ACTIVE )
             GradeFlagsSet( mysteryBox, eMysteryBoxState.USABLE )
-            
         }
 
 
