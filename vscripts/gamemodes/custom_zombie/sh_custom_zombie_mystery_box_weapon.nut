@@ -92,7 +92,7 @@
         if ( !SURVIVAL_PlayerCanUse_AnimatedInteraction( player, weaponMysteryBox ) )
             return false
 
-        if ( !GradeFlagsHas( player, GetMysteryBoxFromEnt( weaponMysteryBox ).uniqueGradeIdx ) )
+        if ( !GetMysteryBoxFromEnt( weaponMysteryBox ).weaponInMysteryBoxIsUsable.contains( player ) )
             return false
 
         return true
@@ -103,20 +103,13 @@
     void function OnUseProcessingWeaponMysteryBox( entity weaponMysteryBox, entity playerUser, int useInputFlags )
     {
         if ( ( useInputFlags & USE_INPUT_ALT ) )
-        {
-            
+        {  
             foreach ( players in GetPlayerArrayOfTeam( playerUser.GetTeam() ) )
             {
                 #if SERVER
-                    GradeFlagsSet( players, GetMysteryBoxFromEnt( weaponMysteryBox ).uniqueGradeIdx )
-
                     if ( players != playerUser ) Remote_CallFunction_NonReplay( players, "ServerCallback_MysteryBoxPrinttObituary", playerUser )
                 #endif // SERVER
             }
-
-            #if SERVER
-                GradeFlagsClear( playerUser, GetMysteryBoxFromEnt( weaponMysteryBox ).uniqueGradeIdx )
-            #endif // SERVER
         }
 
         if ( !( useInputFlags & USE_INPUT_LONG ) )

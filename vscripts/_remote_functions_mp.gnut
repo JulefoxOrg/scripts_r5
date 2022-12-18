@@ -235,6 +235,7 @@ void function RemoteFunctions_Init_Begin()
             Remote_RegisterClientFunction( "ServerCallback_RUIInit" )
             Remote_RegisterClientFunction( "ServerCallback_MysteryBoxPrinttObituary", "entity" )
             Remote_RegisterClientFunction( "ServerCallback_MysteryBoxIsUsable", "entity", "bool" )
+            Remote_RegisterClientFunction( "ServerCallback_WeaponInMysteryBoxIsUsable", "entity", "bool" )
             Remote_RegisterClientFunction( "ServerCallback_MysteryBoxChangeLocation_DoAnnouncement" )
 
 			//

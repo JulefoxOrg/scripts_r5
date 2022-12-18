@@ -11,6 +11,7 @@
         global function ServerCallback_RUIInit
         global function ServerCallback_MysteryBoxPrinttObituary
         global function ServerCallback_MysteryBoxIsUsable
+        global function ServerCallback_WeaponInMysteryBoxIsUsable
         global function ServerCallback_MysteryBoxChangeLocation_DoAnnouncement
 
     // Consts
@@ -112,6 +113,20 @@
     void function ServerCallback_MysteryBoxIsUsable( entity mysteryBox, bool isUsable )
     {
         GetMysteryBox( mysteryBox ).mysteryBoxIsUsable = isUsable
+    }
+
+
+
+    void function ServerCallback_WeaponInMysteryBoxIsUsable( entity weapon, bool isUsable )
+    {
+        if ( !isUsable )
+        {
+            GetMysteryBoxFromEnt( weapon ).weaponInMysteryBoxIsUsable.clear()
+        }
+        else
+        {
+            GetMysteryBoxFromEnt( weapon ).weaponInMysteryBoxIsUsable.append( GetLocalClientPlayer() )
+        }
     }
 
 

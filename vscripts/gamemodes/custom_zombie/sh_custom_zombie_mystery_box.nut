@@ -68,8 +68,8 @@
     global struct CustomZombieMysteryBox
     {
         array < entity > mysteryBoxArray
-        array < entity > entityCanUseMysteryBox = []
         bool mysteryBoxIsUsable = true
+        array < entity > weaponInMysteryBoxIsUsable = []
         entity mysteryBoxEnt
         entity mysteryBoxFx
         entity mysteryBoxWeapon
@@ -296,6 +296,10 @@
             weapon = CreateWeaponInMysteryBox( 0, mysteryBoxOrigin + MYSTERY_BOX_WEAPON_ORIGIN_OFFSET, mysteryBoxAngles + MYSTERY_BOX_WEAPON_ANGLES_OFFSET, mysteryBoxStruct.targetName )
             script_mover = CreateScriptMover( mysteryBoxOrigin + MYSTERY_BOX_WEAPON_ORIGIN_OFFSET, mysteryBoxAngles + MYSTERY_BOX_WEAPON_ANGLES_OFFSET )
 
+            mysteryBoxStruct.weaponInMysteryBoxIsUsable.clear()
+            foreach ( players in GetAllPlayerInSystemGlobal() )
+                Remote_CallFunction_NonReplay( players, "ServerCallback_WeaponInMysteryBoxIsUsable", weapon, false )
+
             if ( IsValid( weapon ) ) weapon.SetParent( script_mover )
 
             float currentTime = Time()
@@ -311,6 +315,9 @@
                 currentTime = Time()
                 wait waitVar
             }
+
+            mysteryBoxStruct.weaponInMysteryBoxIsUsable.append( player )
+            Remote_CallFunction_NonReplay( player, "ServerCallback_WeaponInMysteryBoxIsUsable", weapon, true )
 
             if ( mysteryBoxStruct.changeLocation )
             {
@@ -351,11 +358,12 @@
         {
             CustomZombieMysteryBox mysteryBoxStruct = GetMysteryBox( mysteryBox )
 
-            foreach ( players in GetPlayerArrayOfTeam( player.GetTeam() ) )
-            GradeFlagsClear( players, mysteryBoxStruct.uniqueGradeIdx )
-
             entity weapon = mysteryBoxStruct.mysteryBoxWeapon
             entity script_mover = mysteryBoxStruct.mysteryBoxWeaponScriptMover
+
+            //mysteryBoxStruct.weaponInMysteryBoxIsUsable = false
+            //foreach ( players in GetAllPlayerInSystemGlobal() )
+            //    Remote_CallFunction_NonReplay( players, "ServerCallback_WeaponInMysteryBoxIsUsable", weapon, false )
 
             if ( IsValid( weapon ) ) weapon.Destroy()
             if ( IsValid( script_mover ) ) script_mover.Destroy()
