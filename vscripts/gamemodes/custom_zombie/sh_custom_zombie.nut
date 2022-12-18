@@ -14,7 +14,7 @@
     // Consts
         // If true printt debugging info and other utilities for dev
         global const bool NIGHTMARE_DEV                       = true
-        global const bool SPAWN_MYSTERYBOX_ON_ALL_LOCATIONS   = true
+        global const bool SPAWN_MYSTERYBOX_ON_ALL_LOCATIONS   = false
 
 
     // Perks struct
