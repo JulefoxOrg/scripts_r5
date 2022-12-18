@@ -21,11 +21,6 @@
         global function MysteryBox_DisplayRui
     #endif // CLIENT
 
-    global enum eMysteryBoxState
-    {
-        USABLE = 0,
-        THREAD_IS_ACTIVE = 1
-    }
     int uniqueGradeIdx = 1000
 
     // Consts
@@ -52,6 +47,7 @@
 
 
     #if SERVER
+        // Create new locations for mystery boxes
         global struct MisteryBoxLocationData
         {
             array < MisteryBoxLocationData > locationDataArray
@@ -63,6 +59,7 @@
         }
         global MisteryBoxLocationData misteryBoxLocationData
 
+        // You can know if an instance of "MisteryBoxLocationData" is valid or null
         typedef ornullMisteryBoxLocationData MisteryBoxLocationData ornull
     #endif // SERVER
 
@@ -71,6 +68,8 @@
     global struct CustomZombieMysteryBox
     {
         array < entity > mysteryBoxArray
+        array < entity > entityCanUseMysteryBox = []
+        bool mysteryBoxIsUsable = true
         entity mysteryBoxEnt
         entity mysteryBoxFx
         entity mysteryBoxWeapon
@@ -137,15 +136,15 @@
         CustomZombieMysteryBox newMysteryBox
 
         newMysteryBox.mysteryBoxEnt = mysteryBox
-        newMysteryBox.targetName = mysteryBox.GetTargetName()
         newMysteryBox.uniqueGradeIdx = uniqueGradeIdx++
+        newMysteryBox.targetName = mysteryBox.GetTargetName()
 
         #if SERVER
             newMysteryBox.maxUseIdx = RandomIntRange( MYSTERY_BOX_MIN_CAN_USE, MYSTERY_BOX_MAX_CAN_USE )
         #endif // SERVER
 
-        customZombieMysteryBox.mysteryBox[ mysteryBox ] <- newMysteryBox
         customZombieMysteryBox.mysteryBoxArray.append( mysteryBox )
+        customZombieMysteryBox.mysteryBox[ mysteryBox ] <- newMysteryBox
 
         return customZombieMysteryBox.mysteryBox[ mysteryBox ]
     }
@@ -159,7 +158,6 @@
             mysteryBox.SetUsableByGroup( "pilot" )
             mysteryBox.SetUsableValue( USABLE_BY_ALL | USABLE_CUSTOM_HINTS )
             mysteryBox.SetUsablePriority( USABLE_PRIORITY_MEDIUM )
-            GradeFlagsSet( mysteryBox, eMysteryBoxState.USABLE )
         #endif // SERVER
 
         SetCallback_CanUseEntityCallback( mysteryBox, MysteryBox_CanUse )
@@ -185,8 +183,8 @@
     {
         if ( !SURVIVAL_PlayerCanUse_AnimatedInteraction( player, mysteryBox ) )
             return false
-        
-        if ( mysteryBox.GetGrade() != eMysteryBoxState.USABLE )
+
+        if ( !GetMysteryBox( mysteryBox ).mysteryBoxIsUsable )
             return false
 
         return true
@@ -222,28 +220,28 @@
         if ( !PlayerHasEnoughScore( player, MYSTERY_BOX_COST ) )
             return
 
-        #if SERVER
-            GradeFlagsSet( mysteryBox, eMysteryBoxState.THREAD_IS_ACTIVE )
+        mysteryBoxStruct.mysteryBoxIsUsable = false
 
+        RemoveScoreToPlayer( player, MYSTERY_BOX_COST )
+
+        #if SERVER
             mysteryBoxStruct.changeLocation = false
-            
-                mysteryBoxStruct.usedIdx++
+            mysteryBoxStruct.usedIdx++
+
+            foreach ( players in GetAllPlayerInSystemGlobal() )
+                Remote_CallFunction_NonReplay( players, "ServerCallback_MysteryBoxIsUsable", mysteryBox, false )
 
             if ( mysteryBoxStruct.usedIdx >= mysteryBoxStruct.maxUseIdx )
             {
                 mysteryBoxStruct.changeLocation = true
             }
-        #endif // SERVER
 
-        RemoveScoreToPlayer( player, MYSTERY_BOX_COST )
+            thread MysteryBox_Init( mysteryBox, player )
+        #endif // SERVER
 
         #if SERVER && NIGHTMARE_DEV
             printt( format( "Number of times used before swap: %i / %i", mysteryBoxStruct.usedIdx, mysteryBoxStruct.maxUseIdx ) )
         #endif // SERVER && NIGHTMARE_DEV
-
-        #if SERVER
-            thread MysteryBox_Init( mysteryBox, player )
-        #endif // SERVER
     }
 
 
@@ -264,12 +262,15 @@
         }
     #endif // CLIENT
 
-    //  _______ _    _ _____  ______          _____  
-    // |__   __| |  | |  __ \|  ____|   /\   |  __ \ 
-    //    | |  | |__| | |__) | |__     /  \  | |  | |
-    //    | |  |  __  |  _  /|  __|   / /\ \ | |  | |
-    //    | |  | |  | | | \ \| |____ / ____ \| |__| |
-    //    |_|  |_|  |_|_|  \_\______/_/    \_\_____/ 
+
+    //////////////////////////////////////////////
+    //    _____ _                        _      //
+    //   |_   _| |__  _ __ ___  __ _  __| |     //
+    //     | | | '_ \| '__/ _ \/ _` |/ _` |     //
+    //     | | | | | | | |  __/ (_| | (_| |     //
+    //     |_| |_| |_|_|  \___|\__,_|\__,_|     //
+    //////////////////////////////////////////////
+                                   
 
     #if SERVER            
         // Thread init
@@ -364,9 +365,11 @@
             waitthread MysteryBox_PlayCloseSequence( mysteryBox )
 
                 wait 0.1
+            
+            mysteryBoxStruct.mysteryBoxIsUsable = true
 
-            GradeFlagsClear( mysteryBox, eMysteryBoxState.THREAD_IS_ACTIVE )
-            GradeFlagsSet( mysteryBox, eMysteryBoxState.USABLE )
+            foreach ( players in GetAllPlayerInSystemGlobal() )
+                Remote_CallFunction_NonReplay( players, "ServerCallback_MysteryBoxIsUsable", mysteryBox, true )
         }
 
 
@@ -391,13 +394,6 @@
                 wait 0.1
 
             if ( IsValid( toDissolve ) ) toDissolve.Dissolve( ENTITY_DISSOLVE_CORE, < 0, 0, 0 >, 1000 )
-        }
-
-
-        // Refunds the player
-        void function MysteryBoxRefundPlayer( entity player )
-        {
-            AddScoreToPlayer( player, MYSTERY_BOX_COST )
         }
 
 
@@ -456,23 +452,21 @@
         {
             waitthread PlayAnim( mysteryBox, "loot_bin_01_close" )
         }
+    #endif // SERVER
 
 
-        // Register a new location
-        MisteryBoxLocationData function RegisterMysteryBoxLocation( vector origin, vector angles )
-        {
-            MisteryBoxLocationData location
-            location.origin = origin
-            location.angles = angles
-            location.isUsed = false
-
-            misteryBoxLocationData.locationDataArray.append( location )
-
-            return location
-        }
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    //    __  __           _                  ____            __  __            ___       _ _       //
+    //   |  \/  |_   _ ___| |_ ___ _ __ _   _| __ )  _____  _|  \/  | __ _ _ __|_ _|_ __ (_) |_     //
+    //   | |\/| | | | / __| __/ _ \ '__| | | |  _ \ / _ \ \/ / |\/| |/ _` | '_ \| || '_ \| | __|    //
+    //   | |  | | |_| \__ \ ||  __/ |  | |_| | |_) | (_) >  <| |  | | (_| | |_) | || | | | | |_     //
+    //   |_|  |_|\__, |___/\__\___|_|   \__, |____/ \___/_/\_\_|  |_|\__,_| .__/___|_| |_|_|\__|    //
+    //           |___/                  |___/                             |_|                       //
+    //////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-        // Init the number of boxes you want
+    #if SERVER
+        // Init the number of boxes you want in the game
         void function MysteryBoxMapInit( int num )
         {
 
@@ -500,55 +494,6 @@
         }
 
 
-        array < MisteryBoxLocationData > function GetAllMysteryBoxLocations()
-        {
-            return misteryBoxLocationData.locationDataArray
-        }
-
-
-        MisteryBoxLocationData ornull function FindUnusedMysteryBoxLocation()
-        {
-            GetAllMysteryBoxLocations().randomize()
-
-            foreach ( locations in GetAllMysteryBoxLocations() )
-            {
-                if ( locations.isUsed )
-                    continue
-                else
-                    return locations
-            }
-
-            return null
-        }
-
-
-        MisteryBoxLocationData ornull function FindUsedMysteryBoxLocation( string targetName )
-        {
-            GetAllMysteryBoxLocations().randomize()
-
-            foreach ( locations in GetAllMysteryBoxLocations() )
-            {
-                if ( locations.targetName == targetName )
-                    return locations
-            }
-
-            return null
-        }
-
-
-        int function GetAvailablesLocations()
-        {
-            int i = 0
-            foreach ( locations in GetAllMysteryBoxLocations() )
-            {
-                if ( !locations.isUsed )
-                    i++
-            }
-
-            return i
-        }
-
-
         // Create mystery box
         entity function CreateMysteryBox( vector origin, vector angles )
         {
@@ -567,12 +512,91 @@
     #endif // SERVER
 
 
-    //    _    _ _______ _____ _      _____ _________     __
-    //   | |  | |__   __|_   _| |    |_   _|__   __\ \   / /
-    //   | |  | |  | |    | | | |      | |    | |   \ \_/ / 
-    //   | |  | |  | |    | | | |      | |    | |    \   /  
-    //   | |__| |  | |   _| |_| |____ _| |_   | |     | |   
-    //    \____/   |_|  |_____|______|_____|  |_|     |_|   
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //      __  __ _     _                  ____            _                    _   _             ____        _            //
+    //     |  \/  (_)___| |_ ___ _ __ _   _| __ )  _____  _| |    ___   ___ __ _| |_(_) ___  _ __ |  _ \  __ _| |_ __ _     //
+    //     | |\/| | / __| __/ _ \ '__| | | |  _ \ / _ \ \/ / |   / _ \ / __/ _` | __| |/ _ \| '_ \| | | |/ _` | __/ _` |    //
+    //     | |  | | \__ \ ||  __/ |  | |_| | |_) | (_) >  <| |__| (_) | (_| (_| | |_| | (_) | | | | |_| | (_| | || (_| |    //
+    //     |_|  |_|_|___/\__\___|_|   \__, |____/ \___/_/\_\_____\___/ \___\__,_|\__|_|\___/|_| |_|____/ \__,_|\__\__,_|    //
+    //                                |___/                                                                                 //
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    #if SERVER
+        // Register a new location for mystery boxes
+        MisteryBoxLocationData function RegisterMysteryBoxLocation( vector origin, vector angles )
+        {
+            MisteryBoxLocationData location
+            location.origin = origin
+            location.angles = angles
+            location.isUsed = false
+
+            misteryBoxLocationData.locationDataArray.append( location )
+
+            return location
+        }
+
+
+        // Return all mystery boxes locations
+        array < MisteryBoxLocationData > function GetAllMysteryBoxLocations()
+        {
+            return misteryBoxLocationData.locationDataArray
+        }
+
+
+        // Try to find an unused location otherwise returns null
+        MisteryBoxLocationData ornull function FindUnusedMysteryBoxLocation()
+        {
+            GetAllMysteryBoxLocations().randomize()
+
+            foreach ( locations in GetAllMysteryBoxLocations() )
+            {
+                if ( locations.isUsed )
+                    continue
+                else
+                    return locations
+            }
+
+            return null
+        }
+
+
+        // Tries to find a location via its "target name" otherwise returns null
+        MisteryBoxLocationData ornull function FindUsedMysteryBoxLocation( string targetName )
+        {
+            foreach ( locations in GetAllMysteryBoxLocations() )
+            {
+                if ( locations.targetName == targetName )
+                    return locations
+            }
+
+            return null
+        }
+
+
+        // Returns the number of available slots
+        int function GetAvailablesLocations()
+        {
+            int i = 0
+            foreach ( locations in GetAllMysteryBoxLocations() )
+            {
+                if ( !locations.isUsed )
+                    i++
+            }
+
+            return i
+        }
+    #endif // SERVER
+
+
+    //////////////////////////////////////
+    //    _   _ _   _ _ _ _             //
+    //   | | | | |_(_) (_) |_ _   _     //
+    //   | | | | __| | | | __| | | |    //
+    //   | |_| | |_| | | | |_| |_| |    //
+    //    \___/ \__|_|_|_|\__|\__, |    //
+    //                        |___/     //
+    //////////////////////////////////////
 
 
     // Get a specific mystery box
@@ -608,5 +632,13 @@
     {
     	return str + "_idx" + uniqueMysteryBoxIdx++
     }
+
+    #if SERVER
+        // Refunds the player
+        void function MysteryBoxRefundPlayer( entity player )
+        {
+            AddScoreToPlayer( player, MYSTERY_BOX_COST )
+        }
+    #endif // SERVER
 
 #endif // SERVER || CLIENT

@@ -10,6 +10,7 @@
         global function ServerCallback_UpdateClientScoreToPlayer
         global function ServerCallback_RUIInit
         global function ServerCallback_MysteryBoxPrinttObituary
+        global function ServerCallback_MysteryBoxIsUsable
         global function ServerCallback_MysteryBoxChangeLocation_DoAnnouncement
 
     // Consts
@@ -104,6 +105,13 @@
     void function ServerCallback_MysteryBoxPrinttObituary( entity player )
     {
         Obituary_Print_Localized( format( MYSTERY_BOX_PLAYER_GIVE_WEAPON, player.GetPlayerName() ), GetChatTitleColorForPlayer( GetLocalClientPlayer() ), BURN_COLOR )
+    }
+
+
+
+    void function ServerCallback_MysteryBoxIsUsable( entity mysteryBox, bool isUsable )
+    {
+        GetMysteryBox( mysteryBox ).mysteryBoxIsUsable = isUsable
     }
 
 
