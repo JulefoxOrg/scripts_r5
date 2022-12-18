@@ -39,7 +39,7 @@
         const vector MYSTERY_BOX_WEAPON_ORIGIN_OFFSET   = < 0, 0, 20 >
 
     #if SERVER
-        const asset MYSTERY_BOX_BEAM                    = $"P_ar_hot_zone_far"
+        const asset MYSTERY_BOX_BEAM                    = $"P_ar_loot_drop_point_far"
         const asset NESSY_MODEL                         = $"mdl/domestic/nessy_doll.rmdl"
     #endif // SERVER
 
@@ -50,6 +50,14 @@
     // Mystery box locations
     array < vector > locationOrigin = [ < 3910.18848, 5499.14404, -4295.94385 >, < 3910.18848, 5499.14404, -4295.94385 > ]
     array < vector > locationAngles = [ < 0, -140, 0 >, < 0, -140, 0 > ]
+
+    array < array > mysteryBoxLocation =
+    [
+        [ < 3910.18848, 5499.14404, -4295.94385 >, < 0, -140, 0 >, false ],
+        [ < 3910.18848, 5499.14404, -4295.94385 >, < 0, -140, 0 >, false ]
+    ]
+
+
 
 
     // Global struct for mystery box
@@ -160,7 +168,7 @@
     void function SetMysteryBoxFx( entity mysteryBox )
     {
         #if SERVER
-            GetMysteryBox( mysteryBox ).mysteryBoxFx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( MYSTERY_BOX_BEAM ), mysteryBox.GetOrigin(), < 90, 0, 0 > )
+            GetMysteryBox( mysteryBox ).mysteryBoxFx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( MYSTERY_BOX_BEAM ), mysteryBox.GetOrigin(), < 0, 0, 0 > )
         #endif // SERVER
     }
 
@@ -190,7 +198,7 @@
         settings.successFunc    = MysteryBoxUseSuccess
 
         #if CLIENT
-            settings.hint               = "#HINT_VAULT_UNLOCKING"
+            settings.hint               = "Processing Mystery box..."
             settings.displayRui         = MYSTERY_BOX_DISPLAYRUI
             settings.displayRuiFunc     = MysteryBox_DisplayRui
         #endif // CLIENT
@@ -319,6 +327,10 @@
                     GradeFlagsSet( player, mysteryBoxStruct.uniqueGradeIdx )
 
                 wait 3
+
+                    if ( IsValid( script_mover ) && IsValid( weapon ) ) script_mover.NonPhysicsMoveTo( weapon.GetOrigin() - MYSTERY_BOX_WEAPON_MOVE_TO, ( MYSTERY_BOX_WEAPON_MOVE_TIME * 2 ), 0, ( MYSTERY_BOX_WEAPON_MOVE_TIME * 2 ) )
+
+                wait ( MYSTERY_BOX_WEAPON_MOVE_TIME * 2 ) + 0.1
             }
         }
 

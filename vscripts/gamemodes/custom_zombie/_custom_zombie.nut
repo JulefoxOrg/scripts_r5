@@ -10,7 +10,7 @@
     // Server Init (all [servers] files are called here)
     void function CustomZombie_Init()
     {
-        AddCallback_OnClientConnected( OnClientConnected )
+        AddCallback_OnClientConnected( void function(entity player) { thread _OnPlayerConnected(player) } )
         AddCallback_OnClientDisconnected( OnClientDisconnected )
 
         AddCallback_EntitiesDidLoad( WeaponWall )
@@ -52,13 +52,24 @@
 
 
     // Add callback on client connected
-    void function OnClientConnected( entity player )
+    void function _OnPlayerConnected( entity player )
     {
+        wait 1.0
+        
+        if( !IsValid( player ) )
+            return
+
+        // UI Init
+        Remote_CallFunction_NonReplay( player, "ServerCallback_RUIInit" )
+
+        player.SetOrigin( < 3828, 4592, -4246 > )
+        player.SetAngles( < 0, 0, 0 > )
+        player.SetVelocity( < 0, 0, 0 > )
+
         // If NIGHTMARE_DEV is true
         // Add $ on start + Set player origin
         #if NIGHTMARE_DEV
             AddScoreToPlayer( player, 10000 )
-            thread PlayerSetOrigin( player )
         #else
             // Add $ on start
             AddScoreToPlayer( player, 500 )
@@ -66,9 +77,6 @@
             // Give P2020 on start
             GiveWeaponToPlayer( player, "mp_weapon_semipistol", WEAPON_INVENTORY_SLOT_PRIMARY_0 )
         #endif // NIGHTMARE_DEV
-
-        // UI Init
-        Remote_CallFunction_NonReplay( player, "ServerCallback_RUIInit" )
     }
 
 
@@ -83,17 +91,6 @@
     }
 
 
-    // Set player origin (NIGHTMARE_DEV ONLY)
-    void function PlayerSetOrigin( entity player )
-    {
-        wait 1.0
-    
-        player.SetOrigin( < 3828, 4592, -4246 > )
-        player.SetAngles( < 0, 0, 0 > )
-        player.SetVelocity( < 0, 0, 0 > )
-    }
-
-
     // Dev testing
     bool function ClientCommand_CustomZombieDevCommand( entity player, array < string > args )
     {
@@ -104,8 +101,6 @@
             float reloadTime = weapons.GetWeaponSettingFloat( eWeaponVar.reload_time )
             printt( reloadTime )
         } */
-
-        foreach ( players in GetPlayerArrayOfTeam( player.GetTeam() ) ) printt( players )
 
         return true
     }

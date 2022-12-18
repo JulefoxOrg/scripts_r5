@@ -272,6 +272,10 @@
         int weaponIdx = GetWeaponIdx( usableWeaponWall )
         string weaponName = eWeaponZombieName[ weaponIdx ][ 0 ]
 
+        #if SERVER
+            entity pickup
+        #endif // SERVER
+
 
         if ( PlayerHasWeapon( player, weaponName ) )
         {
@@ -283,6 +287,10 @@
             weapon.SetWeaponPrimaryClipCount( weapon.GetWeaponPrimaryClipCountMax() )
 
             RemoveScoreToPlayer( player, eWeaponZombiePrice[ weaponIdx ][ 1 ] )
+
+            //LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( weaponName )
+            //string ammoType = weaponData.ammoType
+            //if ( ammoType == "" )
             
             //SURVIVAL_AddToPlayerInventory( player, "bullet", 60 )
 
@@ -298,8 +306,6 @@
             #if SERVER
                 ServerWeaponWallUseSuccess( usableWeaponWall, player )
             #endif // SERVER
-
-            //Survival_PickupItem( weapon, player )
         }
     }
 
@@ -348,10 +354,10 @@
             if ( PlayerHasWeapon( player, weaponName ) )
             {
                 string ammoType
-                LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( weaponName )
+                //LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( weaponName )
     			//if ( weaponData.ammoType == "bullet" )
-                SURVIVAL_AddToPlayerInventory( player, weaponData.ammoType, 40, true )
-                printt(weaponData.ammoType)
+                //SURVIVAL_AddToPlayerInventory( player, weaponData.ammoType, 40, true )
+                //printt(weaponData.ammoType)
             }
             else
             {
@@ -377,22 +383,21 @@
         // Give a weapon to the player without swap
         entity function GiveWeaponToPlayer( entity player, string weaponName, int inventorySlot )
         {
-            entity weapon
+            entity weapon ; entity pickup
 
             if ( weaponName == "mp_weapon_grenade_emp" || weaponName == "mp_weapon_frag_grenade" || weaponName == "mp_weapon_thermite_grenade" )
             {
-                SURVIVAL_AddToPlayerInventory( player, weaponName, 1, false )
-
                 weapon = player.GetNormalWeapon( WEAPON_INVENTORY_SLOT_ANTI_TITAN )
 
                 printt(weapon)
 
-                //if ( IsValid( weapon ) )
-    		    //{
-                    weapon = player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponName )
-                //}
+                weapon = player.SetActiveWeaponByName( eActiveInventorySlot.mainHand, weaponName )
 
-                SURVIVAL_AddToPlayerInventory( player, weaponName, 1 )
+                LootData weaponData = SURVIVAL_Loot_GetLootDataByRef( weaponName )
+                string ammoType = weaponData.ammoType
+                if ( ammoType == "" )
+                pickup = SpawnGenericLoot( weaponName, < 0, 0, 0 >, < 0, 0, 0 >, 2 )
+                TryPickupItem( eLootAction.PICKUP, pickup, player )
 
             }
             else weapon = player.GiveWeapon( weaponName, inventorySlot )

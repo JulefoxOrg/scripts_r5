@@ -104,9 +104,17 @@
     {
         if ( ( useInputFlags & USE_INPUT_ALT ) )
         {
-            #if SERVER
-                foreach ( players in GetPlayerArrayOfTeam( playerUser.GetTeam() ) )
+            
+            foreach ( players in GetPlayerArrayOfTeam( playerUser.GetTeam() ) )
+            {
+                #if SERVER
                     GradeFlagsSet( players, GetMysteryBoxFromEnt( weaponMysteryBox ).uniqueGradeIdx )
+
+                    if ( players != playerUser ) Remote_CallFunction_NonReplay( players, "ServerCallback_MysteryBoxPrinttObituary", playerUser )
+                #endif // SERVER
+            }
+
+            #if SERVER
                 GradeFlagsClear( playerUser, GetMysteryBoxFromEnt( weaponMysteryBox ).uniqueGradeIdx )
             #endif // SERVER
         }

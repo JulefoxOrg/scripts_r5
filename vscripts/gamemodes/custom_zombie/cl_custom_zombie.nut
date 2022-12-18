@@ -9,10 +9,12 @@
         global function ServerCallback_OnClientDisconnected
         global function ServerCallback_UpdateClientScoreToPlayer
         global function ServerCallback_RUIInit
+        global function ServerCallback_MysteryBoxPrinttObituary
         global function ServerCallback_MysteryBoxChangeLocation_DoAnnouncement
 
     // Consts
-        const string SCORE = "%i $"
+        const string SCORE                            = "%i $"
+        const string MYSTERY_BOX_PLAYER_GIVE_WEAPON   = "%s gives his weapon in the mystery box"
 
 
     // Client Init (all [client] files are called here)
@@ -59,7 +61,7 @@
 
         UISize screenSize = GetScreenSize()
 
-        var screenAlignmentTopoScoreText = RuiTopology_CreatePlane( <(screenSize.width / 2) + 200, 0, 0>, <1000, 0, 0>, <0, 1720, 0>, false )
+        var screenAlignmentTopoScoreText = RuiTopology_CreatePlane( < ( screenSize.width / 2 ) + 200, 0, 0 >, < 1000, 0, 0 >, < 0, 1720, 0 >, false )
 
         if(!IsValid( player.playerScoreUI ))
         {
@@ -96,6 +98,14 @@
 
         return newString
     }
+
+
+
+    void function ServerCallback_MysteryBoxPrinttObituary( entity player )
+    {
+        Obituary_Print_Localized( format( MYSTERY_BOX_PLAYER_GIVE_WEAPON, player.GetPlayerName() ), GetChatTitleColorForPlayer( GetLocalClientPlayer() ), BURN_COLOR )
+    }
+
 
 
     void function ServerCallback_MysteryBoxChangeLocation_DoAnnouncement()
