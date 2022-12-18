@@ -13,6 +13,8 @@
         global function CreateMysteryBox
         global function DestroyWeaponByDeadline_Thread
         global function MysteryBoxMapInit
+        global function RegisterMysteryBoxLocation
+        global function GetAvailablesLocations
     #endif // SERVER
 
     #if CLIENT
@@ -49,19 +51,20 @@
     #endif // CLIENT
 
 
-    global struct MisteryBoxLocationData
-    {
-        array < MisteryBoxLocationData > locationDataArray
+    #if SERVER
+        global struct MisteryBoxLocationData
+        {
+            array < MisteryBoxLocationData > locationDataArray
 
-        vector origin
-        vector angles
-        bool isUsed
-        string targetName = "notUsedLocation"
-    }
-    global MisteryBoxLocationData misteryBoxLocationData
+            vector origin
+            vector angles
+            bool isUsed
+            string targetName = ""
+        }
+        global MisteryBoxLocationData misteryBoxLocationData
 
-
-    typedef ornullMisteryBoxLocationData MisteryBoxLocationData ornull
+        typedef ornullMisteryBoxLocationData MisteryBoxLocationData ornull
+    #endif // SERVER
 
 
     // Global struct for mystery box
@@ -103,9 +106,6 @@
             AddCreateCallback( "prop_dynamic", MysteryBoxInit )
         #endif // CLIENT
 
-        RegisterMysteryBoxLocation( < 3910.18848, 5499.14404, -4295.94385 >, < 0, -140, 0 > )
-        RegisterMysteryBoxLocation( < 2100.60107, 5334.08203, -3207.96875 >, < 0, -90, 0 > )
-        RegisterMysteryBoxLocation( < 6202.81689, 6059.86182, -3503.96875 >, < 0, -92, 0 > )
     }
 
 
@@ -141,7 +141,6 @@
         newMysteryBox.uniqueGradeIdx = uniqueGradeIdx++
 
         #if SERVER
-            SetTargetName( mysteryBox, newMysteryBox.targetName )
             newMysteryBox.maxUseIdx = RandomIntRange( MYSTERY_BOX_MIN_CAN_USE, MYSTERY_BOX_MAX_CAN_USE )
         #endif // SERVER
 
@@ -248,20 +247,6 @@
     }
 
 
-    // Register a new location
-    MisteryBoxLocationData function RegisterMysteryBoxLocation( vector origin, vector angles )
-    {
-        MisteryBoxLocationData location
-        location.origin = origin
-        location.angles = angles
-        location.isUsed = false
-
-        misteryBoxLocationData.locationDataArray.append( location )
-
-        return location
-    }
-
-
     #if CLIENT
         // Text override
         string function MysteryBox_TextOverride( entity mysteryBox )
@@ -343,7 +328,7 @@
 
                     wait 10
 
-                RespawnMysteryBox()
+                RespawnMysteryBox( mysteryBoxStruct.targetName )
             }
             else
             {
@@ -417,12 +402,36 @@
 
 
         // Respawn a mystery box at a random position
-        void function RespawnMysteryBox()
+        void function RespawnMysteryBox( string targetName )
         {
-            int locationsLen = locationOrigin.len() - 1
-            int locations = RandomIntRange( 0, locationsLen )
 
-            CreateMysteryBox( locationOrigin[ locations ], locationAngles[ locations ] )
+            ornullMisteryBoxLocationData ornullLocation = FindUsedMysteryBoxLocation( targetName )
+
+                if ( ornullLocation == null )
+                    return
+
+                MisteryBoxLocationData location = expect MisteryBoxLocationData( ornullLocation )
+
+
+            ornullMisteryBoxLocationData ornullNewLocation = FindUnusedMysteryBoxLocation()
+
+                if ( ornullNewLocation == null )
+                {
+                    location.targetName = ""
+                    location.isUsed = false
+                    return
+                }
+
+                MisteryBoxLocationData newLocation = expect MisteryBoxLocationData( ornullNewLocation )
+
+                entity mysteryBox = CreateMysteryBox( newLocation.origin, newLocation.angles )
+
+                newLocation.targetName = mysteryBox.GetTargetName()
+                newLocation.isUsed = true
+
+
+            location.targetName = ""
+            location.isUsed = false
         }
 
         
@@ -449,9 +458,27 @@
         }
 
 
+        // Register a new location
+        MisteryBoxLocationData function RegisterMysteryBoxLocation( vector origin, vector angles )
+        {
+            MisteryBoxLocationData location
+            location.origin = origin
+            location.angles = angles
+            location.isUsed = false
+
+            misteryBoxLocationData.locationDataArray.append( location )
+
+            return location
+        }
+
+
         // Init the number of boxes you want
         void function MysteryBoxMapInit( int num )
         {
+
+            #if NIGHTMARE_DEV && SPAWN_MYSTERYBOX_ON_ALL_LOCATIONS
+                num = GetAvailablesLocations()
+            #endif // NIGHTMARE_DEV && SPAWN_MYSTERYBOX_ON_ALL_LOCATIONS
 
             for ( int i = 0 ; i < num ; i++ )
             {
@@ -470,6 +497,55 @@
 
             }
 
+        }
+
+
+        array < MisteryBoxLocationData > function GetAllMysteryBoxLocations()
+        {
+            return misteryBoxLocationData.locationDataArray
+        }
+
+
+        MisteryBoxLocationData ornull function FindUnusedMysteryBoxLocation()
+        {
+            GetAllMysteryBoxLocations().randomize()
+
+            foreach ( locations in GetAllMysteryBoxLocations() )
+            {
+                if ( locations.isUsed )
+                    continue
+                else
+                    return locations
+            }
+
+            return null
+        }
+
+
+        MisteryBoxLocationData ornull function FindUsedMysteryBoxLocation( string targetName )
+        {
+            GetAllMysteryBoxLocations().randomize()
+
+            foreach ( locations in GetAllMysteryBoxLocations() )
+            {
+                if ( locations.targetName == targetName )
+                    return locations
+            }
+
+            return null
+        }
+
+
+        int function GetAvailablesLocations()
+        {
+            int i = 0
+            foreach ( locations in GetAllMysteryBoxLocations() )
+            {
+                if ( !locations.isUsed )
+                    i++
+            }
+
+            return i
         }
 
 
@@ -517,30 +593,6 @@
         }
 
     return customZombieMysteryBox.mysteryBox[ mysteryBox ] }
-
-
-
-    array < MisteryBoxLocationData > function GetAllMysteryBoxLocations()
-    {
-        return misteryBoxLocationData.locationDataArray
-    }
-
-
-    MisteryBoxLocationData ornull function FindUnusedMysteryBoxLocation()
-    {
-        GetAllMysteryBoxLocations().randomize()
-
-        foreach ( locations in GetAllMysteryBoxLocations() )
-        {
-            if ( locations.isUsed )
-                continue
-            else
-                return locations
-        }
-
-        return null
-    }
-
 
 
     // Get all mystery boxes

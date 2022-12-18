@@ -46,7 +46,12 @@
     // Create mystery box on map
     void function MysteryBox()
     {
-        MysteryBoxMapInit( 2 )
+        RegisterMysteryBoxLocation( < 4966.9502, 8444.75879, -4295.90625 >, < 0, 148.6, 0 > )
+        RegisterMysteryBoxLocation( < 2100.60107, 5354.08203, -3207.96875 >, < 0, -90, 0 > )
+        RegisterMysteryBoxLocation( < 6143.9292, 6060.78271, -3503.69702 >, < 0, -90, 0 > )
+        RegisterMysteryBoxLocation( < 2049.49829, 11961.0732, -3336.95386 >, < 0, 90, 0 > )
+        RegisterMysteryBoxLocation( <9651.8125, 5981.89258, -3695.96875>, < 0, -90, 0 > )
+        MysteryBoxMapInit( 1 )
     }
 
 
@@ -100,6 +105,8 @@
             float reloadTime = weapons.GetWeaponSettingFloat( eWeaponVar.reload_time )
             printt( reloadTime )
         } */
+
+        printt( "Available locations: " + GetAvailablesLocations() )
 
         return true
     }
