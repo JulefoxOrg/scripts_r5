@@ -102,14 +102,24 @@
     // Callback if the weapon is used
     void function OnUseProcessingWeaponMysteryBox( entity weaponMysteryBox, entity playerUser, int useInputFlags )
     {
+        // If alt input pressed give weapon to other players in team
         if ( ( useInputFlags & USE_INPUT_ALT ) )
         {  
             foreach ( players in GetPlayerArrayOfTeam( playerUser.GetTeam() ) )
             {
                 #if SERVER
-                    if ( players != playerUser ) Remote_CallFunction_NonReplay( players, "ServerCallback_MysteryBoxPrinttObituary", playerUser )
+                    if ( players != playerUser )
+                    {
+                        Remote_CallFunction_NonReplay( players, "ServerCallback_MysteryBoxPrinttObituary", playerUser )
+                        Remote_CallFunction_NonReplay( players, "ServerCallback_WeaponInMysteryBoxIsUsable", weaponMysteryBox, true )
+                        GetMysteryBoxFromEnt( weaponMysteryBox ).weaponInMysteryBoxIsUsable.append( players )
+                    }
                 #endif // SERVER
             }
+            #if SERVER
+                GetMysteryBoxFromEnt( weaponMysteryBox ).weaponInMysteryBoxIsUsable.removebyvalue( playerUser )
+                Remote_CallFunction_NonReplay( playerUser, "ServerCallback_WeaponInMysteryBoxIsUsable", weaponMysteryBox, false )
+            #endif // SERVER
         }
 
         if ( !( useInputFlags & USE_INPUT_LONG ) )

@@ -361,10 +361,6 @@
             entity weapon = mysteryBoxStruct.mysteryBoxWeapon
             entity script_mover = mysteryBoxStruct.mysteryBoxWeaponScriptMover
 
-            //mysteryBoxStruct.weaponInMysteryBoxIsUsable = false
-            //foreach ( players in GetAllPlayerInSystemGlobal() )
-            //    Remote_CallFunction_NonReplay( players, "ServerCallback_WeaponInMysteryBoxIsUsable", weapon, false )
-
             if ( IsValid( weapon ) ) weapon.Destroy()
             if ( IsValid( script_mover ) ) script_mover.Destroy()
 
