@@ -16,6 +16,8 @@
         AddCallback_EntitiesDidLoad( WeaponWall )
         AddCallback_EntitiesDidLoad( MysteryBox )
 
+        CustomZombieEntity_Init()
+
         #if NIGHTMARE_DEV
             AddClientCommandCallback( ".", ClientCommand_CustomZombieDevCommand )
         #endif // NIGHTMARE_DEV

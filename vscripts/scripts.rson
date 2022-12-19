@@ -977,6 +977,7 @@ When: "SERVER"
 Scripts:
 [
     gamemodes/custom_zombie/_custom_zombie.nut
+    gamemodes/custom_zombie/_custom_zombie_entity.nut
 ]
 
 When: "CLIENT"
