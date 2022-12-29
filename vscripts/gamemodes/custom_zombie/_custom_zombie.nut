@@ -21,6 +21,21 @@
         #if NIGHTMARE_DEV
             AddClientCommandCallback( ".", ClientCommand_CustomZombieDevCommand )
         #endif // NIGHTMARE_DEV
+
+        /* // Cool things
+        array < array > Array = 
+        [
+            [ $"mdl/dev/editor_ref.rmdl", < 0, 0, 0 >, < 0, 0, 0 > ],
+            [ $"mdl/dev/editor_ref.rmdl", < 0, 80, 0 >, < 0, 90, 0 > ],
+            [ $"mdl/dev/editor_ref.rmdl", < 0, 160, 0 >, < 0, 180, 0 > ],
+            [ $"mdl/dev/editor_ref.rmdl", < 0, 240, 0 >, < 0, -90, 0 > ]
+        ]
+
+        foreach ( Arrays in Array )
+        {
+            CreatePropDynamic( expect asset( Arrays[0] ), expect vector( Arrays[1] ), expect vector( Arrays[2] ), SOLID_VPHYSICS, -1 )
+        } */
+
     }
 
 
