@@ -19,8 +19,9 @@ void function LeaveMatch()
 	Durango_LeaveParty()
 #endif // #if DURANGO_PROG
 
-	CancelMatchmaking()
-	ClientCommand( "LeaveMatch" )
+	//CancelMatchmaking()
+	//ClientCommand( "LeaveMatch" )
+	ClientCommand( "disconnect" )
 
 	//load new lobbyvm
 	//ty amos for the idea of loading it on leave match
@@ -41,7 +42,7 @@ void function LoadLobbyAfterLeave()
 	}
 
 	//Create lobby server
-	CreateServer("Lobby VM", "", "mp_lobby", "menufall", eServerVisibility.HIDDEN)
+	CreateServer("Lobby VM", "", "mp_lobby", "menufall", eServerVisibility.OFFLINE)
 	
 	//No longer at main menu
 	g_isAtMainMenu = false
